@@ -1,7 +1,7 @@
 MEMORY
 {
 	RAM (rwx) : ORIGIN = 0x0000, LENGTH = 2K
-	FLASH (rw) : ORIGIN = 0x8000, LENGTH = 0x7FFA /* only put flash before vector table */
+	FLASH (rw) : ORIGIN = 0xC000, LENGTH = 0x3FFA /* only put flash before vector table */
     VECTOR_TABLE (rw) : ORIGIN = 0xFFFA, LENGTH = 6
 }
 

@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["dwbrite"]
 edition = "2021"
 
-build = "build.rs"
+build = "../build.rs"
 
 [profile.release]
 strip = true
