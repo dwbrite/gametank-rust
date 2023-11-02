@@ -1,16 +1,9 @@
 .section .text
-.global my_function
+.global my_function, null_interrupt
 
 my_function:
-    NOP
-    NOP
-    NOP
-    NOP
-    NOP
-    NOP
-    NOP
-    NOP
-    NOP
-    NOP
-    NOP
+    .byte $CB
     RTS
+
+null_interrupt:
+    RTI
