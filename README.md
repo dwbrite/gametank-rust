@@ -15,62 +15,52 @@ I like Rust, I like GameTank. What if, both?
 Rust compiles via LLVM. There is [LLVM-MOS](https://github.com/llvm-mos/llvm-mos/blob/main/README.md), 
 which can target the 6502. Throw all that together and create some linker scripts, we _should_ have a stew.
 
-## Requirements
+# Programming the gametank
 
-- rust, I guess
-- cmake
-- ninja-build
-- clang-devel maybe??
-- libxml2-devel maybe??
-- glibc-devel?
+This repository is _basically_ the rust SDK for the gametank.
+As such, I've included a few utilities to make life easier.
 
-## Steps
+## Development Docker Container
 
-### 1 / [Install LLVM-MOS](https://github.com/llvm-mos/llvm-mos/blob/main/README.md):
+First thing is a docker container where I've built llvm-mos + rust-mos, and a few utilities to make life easier.
 
-```bash
-git clone https://github.com/mrk-its/llvm-mos
-cd llvm-mos
+Just run the container with the project directory mounted as a volume. 
+You'll get access to a fully configured llvm/rust-mos toolchain within the container, 
+while also being able to edit code in your local editor.
+I use IntelliJ as my IDE of choice, with an interactive terminal into the container at the bottom.
 
-echo "DO NOT RUN ME WITHOUT SETTING -DLIBXML2_LIBRARY"
+    docker pull dwbrite/rust-mos:gametank-edition
 
-cmake -C clang/cmake/caches/MOS.cmake -G "Ninja" -S llvm -B build \
-   -DLLVM_INSTALL_TOOLCHAIN_ONLY=OFF \
-   -DLLVM_BUILD_LLVM_DYLIB=ON -DLLVM_LINK_LLVM_DYLIB=ON \
-   -DLLVM_INSTALL_UTILS=ON -DLLVM_BUILD_UTILS=ON -DLLVM_TOOLCHAIN_UTILITIES=FileCheck \
-   -DLLVM_TOOLCHAIN_TOOLS="llvm-addr2line;llvm-ar;llvm-cxxfilt;llvm-dwarfdump;llvm-mc;llvm-nm;llvm-objcopy;llvm-objdump;llvm-ranlib;llvm-readelf;llvm-readobj;llvm-size;llvm-strings;llvm-strip;llvm-symbolizer;llvm-config;llc" \
-   -DLIBXML2_LIBRARY=/usr/lib64/libxml2.so \
-   -DLLVM_TARGETS_TO_BUILD="MOS;X86" \
-   -DLLVM_ENABLE_PROJECTS="clang;lld;lldb"
-cmake --build build -t install
-```
+    docker run -it --rm -v ./:/workspace:z dwbrite/rust-mos:gametank-edition
 
-The latest commit did not work for me, so I rolled back to 66eaba5, deleted the build directory, and then configuration worked.
-Note that you'll need to set the LIBXML2_LIBRARY depending on your system.
-For MacOS, use `-DLIBXML2_LIBRARY=/usr/local/opt/libxml2/lib/libxml2.dylib`,
-debian and others `-DLIBXML2_LIBRARY=/usr/lib/x86_64-linux-gnu/libxml2.so`,
-etc.
+On Windows/WSL, you may need to modify the workspace volume URL.
 
+I would recommend creating your project as a new example, 
+since it's slightly easier than creating a whole template from this repository.
 
-### 3 / Install rust-mos toolchain
+## Justfile
 
-...
+The justfile is a sort of living document and handy tool for your workflow.
+The docker container even includes autocomplete for just.
 
+Most of the time you only need `just build-example <example-name>`, which produces an output.bin file you can load into [the emulator](https://clydeshaffer.com/builds/GameTankEmulator/wasm/?rom=badapple.gtr).
 
-### 4 / rust rust rust
+## Assembly
 
-`rustup override set mos`
-???
+Unfortunately, the current version of rust-mos doesn't support inline assembly.
+We work around this by including assembly as a single static library, 
+compiled from every .asm file found (recursively) in this directory.
+This solution is _okay_, only because dead code is shaken out by the linker.
 
-### 5 / compiling and testing
+This also means that functions aren't often (ever?) inlined in the final binary, 
+and there may be some weird issues with function calls to assembly being jmp rather than jsr.
+Not sure what that's about.
 
-`cargo build --release --example hello`
-`./../tmp/llvm-mos/build/bin/llvm-objdump -d --triple=mos target/mos-unknown-none/release/examples/hello`
-`./../tmp/llvm-mos/build/bin/llvm-objcopy -O binary target/mos-unknown-none/release/examples/hello output.bin`
+## Docs
 
-`cargo install cargo-binutils`
-
-# TODO: figure out why cargo binutils can't find share objects
-
-
-
+You can find programming information about the gametank at 
+the [gametank wiki](https://wiki.gametank.zone/doku.php?id=start), 
+the [programming manual](https://gametank.zone/manual/), 
+as well as some examples/games in C and assembly on 
+[Clyde's github](https://github.com/clydeshaffer).
+For example: [Accursed Fiend](https://github.com/clydeshaffer/fiend)

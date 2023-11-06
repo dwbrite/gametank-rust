@@ -1,7 +1,7 @@
 .section .text
-.global my_function, null_interrupt
+.global wait, null_interrupt
 
-my_function:
+wait:
     .byte $CB
     RTS
 

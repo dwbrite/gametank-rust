@@ -1,10 +1,12 @@
 use core::panic::PanicInfo;
-use core::ptr;
 use crate::*;
+use core::ptr;
 
-#[link(name = "my_function", kind = "static")]
+pub static mut VBLANK: bool = false;
+
 extern "C" {
-    fn null_interrupt();
+    pub fn null_interrupt();
+    pub fn wait();
 }
 
 #[panic_handler]
@@ -21,26 +23,38 @@ extern "C" fn __boot() {
     core::panic!("Came out of main");
 }
 
+extern "C" {
+    static mut __rc0: u8;
+    static mut __rc1: u8;
+}
+
+// #[no_mangle]
+// extern "C" fn __set_v() {
+//     // don't set v lol
+// }
+
 #[cfg(not(feature = "manual_init"))]
 #[no_mangle]
 fn init() {
-    let address: *mut u8 = 0x0000 as *mut u8;
-    let bank_reg: *mut u8 = 0x2005 as *mut u8;
-
     unsafe {
+        let bank_reg: *mut u8 = 0x2005 as *mut u8;
         ptr::write_volatile(bank_reg, 0);
-        ptr::write_volatile(address, 0xF7); // Set byte at address 0x0000 to zero
-        ptr::write_volatile(address.offset(1), 0x1F); // Set byte at address 0x0001 to zero
+
+        __rc0 = 0xFF;
+        __rc1 = 0x1F;
     }
 }
 
-/// 6502 vector table
-/// Order matters!
-/// 0xFFA
+#[no_mangle]
+extern "C" fn vblank_nmi() {
+    unsafe { VBLANK = true; }
+    unsafe { null_interrupt(); }
+}
+
 #[link_section = ".vector_table"]
 #[no_mangle]
 pub static _VECTOR_TABLE: [unsafe extern "C" fn(); 3] = [
-    null_interrupt, // Non-Maskable Interrupt vector
+    vblank_nmi, // Non-Maskable Interrupt vector
     __boot, // Reset vector
     null_interrupt, // IRQ/BRK vector
 ];
