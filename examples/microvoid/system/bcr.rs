@@ -1,5 +1,4 @@
 use volatile::Volatile;
-use crate::MirroredScr;
 
 #[repr(C,packed)]
 pub struct Bcr {

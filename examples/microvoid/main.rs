@@ -5,15 +5,9 @@ extern crate gt_crust;
 
 pub mod system;
 
-use embedded_graphics::geometry::OriginDimensions;
-use embedded_graphics::image::GetPixel;
-use embedded_graphics::pixelcolor::{Gray8, GrayColor};
-use embedded_graphics::prelude::Point;
 use crate::system::scr::*;
 use crate::system::bcr::*;
 use crate::system::console::*;
-
-use tinybmp::*;
 
 #[no_mangle]
 fn main() {

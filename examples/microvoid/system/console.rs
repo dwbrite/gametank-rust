@@ -1,6 +1,6 @@
-use crate::Bcr;
-use crate::MirroredScr;
+use crate::system::bcr::Bcr;
 use crate::system::scr::DmaLocation::Vram;
+use crate::system::scr::MirroredScr;
 use crate::system::vram::VramDma;
 
 pub enum SpriteRamQuadrant {

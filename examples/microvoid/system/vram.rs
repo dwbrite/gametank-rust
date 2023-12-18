@@ -1,8 +1,3 @@
-use embedded_graphics::geometry::{Dimensions, Size};
-use embedded_graphics::Pixel;
-use embedded_graphics::pixelcolor::{Gray8, GrayColor};
-use embedded_graphics::prelude::Point;
-use embedded_graphics::primitives::Rectangle;
 use volatile::Volatile;
 
 const START_ADDRESS: usize = 0x4000;
