@@ -33,14 +33,14 @@ SECTIONS
         *(.bss*)
     } > RAM
 
-/*
+
     .noinit (NOLOAD) : {
         *(.noinit*)
         _stack_end = .;
     } > RAM
 
     _stack_top = 0x1FFF;
-
+/*
     .zp : {
         *(.zp*)
     } > ZP

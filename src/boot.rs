@@ -23,19 +23,25 @@ extern "C" fn __boot() {
     core::panic!("Came out of main");
 }
 
+#[no_mangle]
+extern "C" fn __memset(ptr: *mut u8, value: u8, num: usize) {
+    unsafe {
+        let mut current_ptr = ptr;
+        for _ in 0..num {
+            *current_ptr = value;
+            current_ptr = current_ptr.add(1);
+        }
+    }
+}
+
 extern "C" {
     static mut __rc0: u8;
     static mut __rc1: u8;
 }
 
-// #[no_mangle]
-// extern "C" fn __set_v() {
-//     // don't set v lol
-// }
-
 #[cfg(not(feature = "manual_init"))]
 #[no_mangle]
-fn init() {
+fn init() { // this is __do_init_stack
     unsafe {
         let bank_reg: *mut u8 = 0x2005 as *mut u8;
         ptr::write_volatile(bank_reg, 0);
@@ -44,6 +50,18 @@ fn init() {
         __rc1 = 0x1F;
     }
 }
+
+#[no_mangle]
+fn __do_init_stack() {
+    unsafe {
+        let bank_reg: *mut u8 = 0x2005 as *mut u8;
+        ptr::write_volatile(bank_reg, 0);
+
+        __rc0 = 0xFF;
+        __rc1 = 0x1F;
+    }
+}
+
 
 #[no_mangle]
 extern "C" fn vblank_nmi() {

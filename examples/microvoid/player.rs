@@ -1,0 +1,8 @@
+
+
+struct Sprite {
+
+}
+
+trait Renderable {
+}

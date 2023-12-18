@@ -18,7 +18,7 @@ build-asm:
 
 # objcopy a compiled example to output.bin
 objcopy-example example_name:
-    llvm-objcopy -O binary target/mos-unknown-none/release/examples/{{example_name}} output.bin
+    llvm-objcopy -O binary target/mos-unknown-none/release/examples/{{example_name}} {{example_name}}.gtr
 
 # objdump a compiled example (so like, build it first)
 objdump-example example_name:
@@ -27,7 +27,7 @@ objdump-example example_name:
 # build example compiling asm first
 build-example example_name:
     just build-asm
-    cargo build --release --example {{example_name}}
+    cargo build --release --example {{example_name}} -Z build-std=core --target mos-unknown-none
     just objcopy-example {{example_name}}
 
 # do you really need a doc comment?

@@ -1,5 +1,5 @@
 [build]
-target = "mos-unknown-none"
+#target = "mos-unknown-none"
 
 [target.mos-unknown-none]
 rustflags = [
@@ -9,4 +9,4 @@ rustflags = [
 ]
 
 [unstable]
-build-std = ["core"]
+#build-std = ["core"]
