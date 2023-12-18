@@ -38,6 +38,12 @@ pub struct MirroredScr {
 }
 
 impl MirroredScr {
+    /// 0 = copy 16x16 across whole buffer
+    pub(crate) fn set_dma_gcarry(&mut self, gcarry: bool) {
+        self.mirror.video_reg.update(|val| *val = *val.set_bit(4, gcarry));
+        self.scr.video_reg.write(self.mirror.video_reg.read());
+    }
+
     pub fn set_vram_bank(&mut self, bank: u8) {
         self.mirror.banking.update(|val| *val = *val.set_bits(0..3, bank));
         self.scr.banking.write(self.mirror.banking.read());
@@ -82,6 +88,7 @@ impl MirroredScr {
     }
 
     /// set dma enabled - 0 is DMA enabled, 1 allows access to blitter commands.
+    /// TODO correct, rename, whatever, do something to unfuck this mess.
     pub fn set_dma_enable(&mut self, enable: bool) {
         self .mirror.video_reg.update(|val| *val = *val.set_bit(0, enable));
         self.scr.video_reg.write(self.mirror.video_reg.read());

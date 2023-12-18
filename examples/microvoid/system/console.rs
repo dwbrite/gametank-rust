@@ -71,6 +71,7 @@ impl Console {
 
         self.control_registers.set_colorfill_mode(false);
         self.control_registers.set_vram_bank(sprite.bank);
+        self.control_registers.set_dma_gcarry(true);
 
         self.blitter_registers.gx.write(sprite.vram_x);
         self.blitter_registers.gy.write(sprite.vram_y);

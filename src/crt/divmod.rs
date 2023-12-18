@@ -12,16 +12,15 @@ macro_rules! impl_div_mod {
 
             while divisor <= a {
                 divisor <<= 1;
-                result <<= 1;
             }
 
             while divisor > b {
                 divisor >>= 1;
-                result >>= 1;
 
+                result <<= 1; // Shift result to the left to make room for the next bit
                 if a >= divisor {
                     a -= divisor;
-                    result |= 1;
+                    result |= 1; // Set the least significant bit
                 }
             }
 
