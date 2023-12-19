@@ -10,6 +10,14 @@ pub enum SpriteRamQuadrant {
     Four,
 }
 
+#[derive(PartialEq, Eq)]
+pub enum BlitMode {
+    Normal,
+    FlipX,
+    FlipY,
+    FlipXY
+}
+
 impl SpriteRamQuadrant {
     fn value_gx(&self) -> u8 {
         match self {
@@ -66,19 +74,35 @@ impl Console {
         &mut self.vram
     }
 
-    pub fn draw_sprite(&mut self, sprite: &Sprite, x: u8, y: u8) {
+    pub fn draw_sprite(&mut self, sprite: &Sprite, x: u8, y: u8, blit_mode: BlitMode) {
+        let (mut width, mut height) = (sprite.width, sprite.height);
+        let (mut gx, mut gy) = (sprite.vram_x, sprite.vram_y);
+
+        if blit_mode == BlitMode::FlipX || blit_mode == BlitMode::FlipXY {
+            gx ^= 0xFF;
+            gx -= sprite.width - 1;
+            width ^= 0b10000000;
+        }
+
+        if blit_mode == BlitMode::FlipY || blit_mode == BlitMode::FlipXY {
+            gy ^= 0xFF;
+            gy -= sprite.height - 1;
+            height ^= 0b10000000;
+        }
+
+
         self.control_registers.set_dma_enable(true);
 
         self.control_registers.set_colorfill_mode(false);
         self.control_registers.set_vram_bank(sprite.bank);
         self.control_registers.set_dma_gcarry(true);
 
-        self.blitter_registers.gx.write(sprite.vram_x);
-        self.blitter_registers.gy.write(sprite.vram_y);
+        self.blitter_registers.gx.write(gx);
+        self.blitter_registers.gy.write(gy);
         self.blitter_registers.vx.write(x);
         self.blitter_registers.vy.write(y);
-        self.blitter_registers.width.write(sprite.width);
-        self.blitter_registers.height.write(sprite.height);
+        self.blitter_registers.width.write(width);
+        self.blitter_registers.height.write(height);
         self.blitter_registers.start.write(1);
 
         unsafe { gt_crust::boot::wait(); }

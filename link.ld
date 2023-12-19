@@ -40,11 +40,10 @@ SECTIONS
     } > RAM
 
     _stack_top = 0x1FFF;
-/*
+
     .zp : {
         *(.zp*)
     } > ZP
-*/
 }
 
 # __rc0 and __rc1 are reserved as a 16 bit software stack pointer by llvm-mos
