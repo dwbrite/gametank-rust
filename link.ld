@@ -27,7 +27,7 @@ SECTIONS
 
     .data : {
         *(.data*)
-    } > RAM
+    } > FLASH
 
     .bss : {
         *(.bss*)
