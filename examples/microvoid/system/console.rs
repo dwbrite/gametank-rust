@@ -65,7 +65,7 @@ impl Console {
     }
 
 
-    pub fn access_vram_bank(&mut self, bank: u8, quadrant: SpriteRamQuadrant) -> &mut VramDma {
+    pub fn access_vram_bank(&mut self, bank: u8, quadrant: &SpriteRamQuadrant) -> &mut VramDma {
         self.quadrant_select_blit(quadrant);
         self.control_registers.set_vram_bank(bank);
         self.control_registers.set_dma_location(Vram);
@@ -125,7 +125,7 @@ impl Console {
         self.blitter_registers.reset_irq();
     }
 
-    pub fn quadrant_select_blit(&mut self, quad: SpriteRamQuadrant) {
+    pub fn quadrant_select_blit(&mut self, quad: &SpriteRamQuadrant) {
         self.control_registers.set_dma_enable(true);
 
         self.control_registers.set_colorfill_mode(false);

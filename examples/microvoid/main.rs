@@ -8,6 +8,7 @@ mod font;
 
 use core::{iter, mem};
 use core::iter::once;
+use dgtf_macros::string_to_indices;
 use crate::system::scr::*;
 use crate::system::bcr::*;
 use crate::system::console::*;
@@ -16,13 +17,16 @@ use crate::system::console::*;
 fn main() {
     let mut console = Console::init();
 
-
+    let minifont = font::FontHandle::init(&mut console, 0, SpriteRamQuadrant::One);
 
     loop {
         console.await_vblank();
         console.flip_framebuffer();
 
-        console.draw_box(0, 0, 127, 127, 0b010_00_100);
-        console.draw_box(0, 100, 127, 27, 0b111_10_101);
+        console.draw_box(0, 0, 127, 127, 0b101_00_000);
+        console.draw_box(0, 100, 127, 27, 0b011_10_110);
+
+        // TODO: rename that to gt_string?
+        minifont.draw_string(&mut console, 0, 1, &string_to_indices!("Hello traveler, it hath been a time"));
     }
 }

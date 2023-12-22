@@ -1,14 +1,19 @@
-use crate::system::console::{Console, Sprite, SpriteRamQuadrant};
+use crate::system::console::{BlitMode, Console, SpriteRamQuadrant};
+
+// creates a Sprite and SpriteSheet struct in this module, as well as a static SpriteSheet MINIFONT_SPRITES
+dgtf_macros::include_spritesheet!(MINIFONT_SPRITES, "examples/microvoid/assets/minifont-p.bmp", "examples/microvoid/assets/minifont-p.json");
 
 pub struct FontHandle {
     bank: u8,
+    quadrant: SpriteRamQuadrant,
+    spritesheet: &'static SpriteSheet
 }
 
 impl FontHandle {
-    pub fn init(console: &mut Console) -> FontHandle {
-        let sprite_sheet = dgtf_macros::include_spritesheet!("examples/microvoid/assets/minifont-p.bmp", "examples/microvoid/assets/minifont-p.json");
+    pub fn init(console: &mut Console, bank: u8, quadrant: SpriteRamQuadrant) -> FontHandle {
+        let sprite_sheet = &MINIFONT_SPRITES;
 
-        let mut vram = console.access_vram_bank(0, SpriteRamQuadrant::One);
+        let mut vram = console.access_vram_bank(bank, &quadrant);
 
         let bits_per_pixel = 8 / sprite_sheet.pixels_per_byte as usize;
         let mask = (1 << bits_per_pixel) - 1;
@@ -36,7 +41,34 @@ impl FontHandle {
         }
 
         FontHandle {
-            bank: 0,
+            bank,
+            quadrant,
+            spritesheet: &MINIFONT_SPRITES
+        }
+    }
+
+    pub fn draw_string(&self, console: &mut Console, x: u8, y: u8, string: &[usize]) {
+        let mut w = 0;
+        for char in string {
+            let c = crate::Sprite {
+                bank: self.bank,
+                vram_x: self.spritesheet.sprite_data[*char].sheet_x,
+                vram_y: 40 + self.spritesheet.sprite_data[*char].sheet_y,
+                width: self.spritesheet.sprite_data[*char].width,
+                height: self.spritesheet.sprite_data[*char].height,
+            };
+            let x_offset = self.spritesheet.sprite_data[*char].x_offset;
+            let y_offset = self.spritesheet.sprite_data[*char].y_offset;
+            let x = w + x + x_offset;
+            let y = y + y_offset;
+
+            w += c.width + x_offset;
+
+            if *char == 0 {
+                w -= 1
+            }
+
+            console.draw_sprite(&c, x, y, BlitMode::Normal);
         }
     }
 }
