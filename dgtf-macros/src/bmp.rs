@@ -1,15 +1,15 @@
 
 extern crate proc_macro;
 
-use proc_macro::TokenStream;
+
 use std::collections::HashMap;
-use quote::quote;
+
 use std::fs;
 use tinybmp;
 use tinybmp::ColorTable;
-use embedded_graphics::{pixelcolor::Rgb888, prelude::*};
+use embedded_graphics::{pixelcolor::Rgb888};
 use colors_transform::*;
-use serde::{Deserialize, Serialize};
+
 
 
 static PALETTE: [u8;768] = [
@@ -181,13 +181,12 @@ fn derive_gametank_colors(color_table: &ColorTable) -> Vec<u8>{
     }
 
     colors.dedup();
-    colors.shrink_to_fit();
 
     colors
 }
 
 fn pack_indices(indices: Vec<u8>, pixels_per_byte: u8) -> Vec<u8> {
-    let bits_per_index = 8 / pixels_per_byte;
+    let bits_per_index = 8 / pixels_per_byte; // division here
 
     // chunk by pixels per byte
     // map each chunk to a single u8 by folding into an accumulator
@@ -224,11 +223,16 @@ impl SpriteSheetImage {
             palette[i] = *c;
         }
 
-        let pixels_per_byte: u8 = if color_palette.len() > 16 {
-            1
-        } else {
-            8 / (8 - color_palette.len().next_power_of_two() as u8)
+        let num_colors = color_palette.len();
+
+        let bits_per_color = match num_colors {
+            0..=2 => 1,  // Up to 2 colors can be represented with 1 bit each
+            3..=4 => 2,  // Up to 4 colors need 2 bits each
+            5..=16 => 4, // Up to 16 colors need 4 bits each
+            _ => 8       // More than 16 colors will use 8 bits (1 byte) per color
         };
+
+        let pixels_per_byte: u8 = 8 / bits_per_color;
 
         // map bmp pixels to indices
         let pixel_indices: Vec<u8> = bmp.pixels()
@@ -244,7 +248,7 @@ impl SpriteSheetImage {
 
         let width = header.image_size.width as u8;
         let height = header.image_size.height as u8;
-        let pixel_array_size = packed_pixels.len();
+        let _pixel_array_size = packed_pixels.len();
         
         SpriteSheetImage {
             pixels_per_byte,
