@@ -12,6 +12,10 @@ use serde::{Deserialize, Serialize};
 use syn::{parse_macro_input, LitStr, Token};
 use syn::parse::Parser;
 
+use proc_macro2::TokenStream as TokenStream2;
+use std::path::PathBuf;
+use std::env;
+
 
 mod bmp;
 
@@ -47,22 +51,80 @@ struct Sprite {
     // TODO: We'll probably want more at some point. Maybe.
 }
 
+struct Inputs {
+    static_name: proc_macro2::Ident,
+    bmp_path: String,
+    json_path: String
+}
+
+fn process_input(input: TokenStream) -> Inputs {
+    let input = TokenStream2::from(input);
+
+    // Parse the identifier (static name)
+    let mut iter = input.into_iter();
+    let static_name = match iter.next().expect("Expected identifier for static name").into() {
+        proc_macro2::TokenTree::Ident(ident) => ident,
+        _ => panic!("Expected an identifier for the static name"),
+    };
+
+    // Parse the first comma
+    match iter.next().expect("Expected a comma after static name") {
+        proc_macro2::TokenTree::Punct(punct) if punct.as_char() == ',' => {},
+        _ => panic!("Expected a comma after static name"),
+    };
+
+    // Parse the first string literal (bmp path)
+    let bmp_path = match iter.next().expect("Expected string literal for bmp path") {
+        proc_macro2::TokenTree::Literal(lit) => {
+            // Create a new TokenStream and append the Literal to it
+            let mut token_stream = proc_macro2::TokenStream::new();
+            token_stream.extend(std::iter::once(proc_macro2::TokenTree::Literal(lit)));
+
+            // Parse the TokenStream as a LitStr
+            syn::parse2::<LitStr>(token_stream)
+                .expect("Expected valid string literal")
+                .value()
+        },
+        _ => panic!("Expected a string literal for bmp path"),
+    };
+
+
+    // Parse the second comma
+    match iter.next().expect("Expected a comma after bmp path") {
+        proc_macro2::TokenTree::Punct(punct) if punct.as_char() == ',' => {},
+        _ => panic!("Expected a comma after bmp path"),
+    };
+
+    // Parse the second string literal (json path)
+    let json_path = match iter.next().expect("Expected string literal for json path") {
+        proc_macro2::TokenTree::Literal(lit) => {
+            // Create a new TokenStream and append the Literal to it
+            let mut token_stream = proc_macro2::TokenStream::new();
+            token_stream.extend(std::iter::once(proc_macro2::TokenTree::Literal(lit)));
+
+            // Parse the TokenStream as a LitStr
+            syn::parse2::<LitStr>(token_stream)
+                .expect("Expected valid string literal")
+                .value()
+        },
+        _ => panic!("Expected a string literal for json path"),
+    };
+
+    Inputs {
+        static_name,
+        bmp_path,
+        json_path,
+    }
+}
+
 
 #[proc_macro]
 pub fn include_spritesheet(input: TokenStream) -> TokenStream {
-    // Convert the input TokenStream to a TokenStream2 for parsing
-    let input = proc_macro2::TokenStream::from(input);
+    let inputs = process_input(input);
+    let static_name = inputs.static_name;
 
-    // Define a parser for a tuple of two string literals
-    let parser = syn::punctuated::Punctuated::<LitStr, Token![,]>::parse_separated_nonempty;
-    let args = parser.parse2(input).expect("Expected two string literals separated by a comma, paths to bmp and json files for a spritesheet");
-
-    let mut iter = args.into_iter();
-    let bmp_path = iter.next().expect("Expected first string literal").value();
-    let json_path = iter.next().expect("Expected second string literal").value();
-
-    let json_file_contents = fs::read_to_string(json_path)
-        .expect("Failed to read JSON file");
+    let json_file_contents = std::fs::read_to_string(inputs.json_path.clone())
+        .expect(&format!("Failed to read JSON file {:?}", inputs.json_path.clone()));
 
     let frame_data: FrameData = serde_json::from_str(&json_file_contents).expect("Failed to parse JSON");
 
@@ -100,7 +162,7 @@ pub fn include_spritesheet(input: TokenStream) -> TokenStream {
         }
     }).collect();
 
-    let spritesheetimage = bmp::SpriteSheetImage::load_spritesheet(bmp_path);
+    let spritesheetimage = bmp::SpriteSheetImage::load_spritesheet(inputs.bmp_path);
 
     let pixels_per_byte = spritesheetimage.pixels_per_byte;
     let width = spritesheetimage.width;
@@ -110,7 +172,6 @@ pub fn include_spritesheet(input: TokenStream) -> TokenStream {
     let pixel_array_size = pixel_array.len();
 
     let output = quote! {
-    {
         #[derive(Debug, Copy, Clone)]
         struct Sprite {
             sheet_x: u8,
@@ -131,7 +192,7 @@ pub fn include_spritesheet(input: TokenStream) -> TokenStream {
             pixel_array: [u8; #pixel_array_size],
         }
 
-        static SPRITESHEET: SpriteSheet = SpriteSheet {
+        static #static_name: SpriteSheet = SpriteSheet {
             pixels_per_byte: #pixels_per_byte,
             width: #width as u8,
             height: #height as u8,
@@ -139,10 +200,7 @@ pub fn include_spritesheet(input: TokenStream) -> TokenStream {
             sprite_data: [#(#sprite_tokens),*],
             pixel_array: [#(#pixel_array),*],
         };
-
-        &SPRITESHEET
-    }
-};
+    };
 
     output.into()
 }
