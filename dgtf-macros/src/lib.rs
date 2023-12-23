@@ -173,26 +173,26 @@ pub fn include_spritesheet(input: TokenStream) -> TokenStream {
 
     let output = quote! {
         #[derive(Debug, Copy, Clone)]
-        struct Sprite {
-            sheet_x: u8,
-            sheet_y: u8,
-            width: u8,
-            height: u8,
-            x_offset: u8,
-            y_offset: u8,
+        pub struct Sprite {
+            pub sheet_x: u8,
+            pub sheet_y: u8,
+            pub width: u8,
+            pub height: u8,
+            pub x_offset: u8,
+            pub y_offset: u8,
         }
 
         #[derive(Debug, Copy, Clone)]
-        struct SpriteSheet {
-            pixels_per_byte: u8,
-            palette: [u8; 16],
-            width: u8,
-            height: u8,
-            sprite_data: [Sprite; #num_sprites],
-            pixel_array: [u8; #pixel_array_size],
+        pub struct SpriteSheet {
+            pub pixels_per_byte: u8,
+            pub palette: [u8; 16],
+            pub width: u8,
+            pub height: u8,
+            pub sprite_data: [Sprite; #num_sprites],
+            pub pixel_array: [u8; #pixel_array_size],
         }
 
-        static #static_name: SpriteSheet = SpriteSheet {
+        pub static #static_name: SpriteSheet = SpriteSheet {
             pixels_per_byte: #pixels_per_byte,
             width: #width as u8,
             height: #height as u8,
@@ -211,7 +211,7 @@ pub fn string_to_indices(input: TokenStream) -> TokenStream {
     let characters = " ABCDEFGHIJKLMNOPQRSTUVWXYZ\
                       abcdefghijklmnopqrstuvwxyz\
                       1234567890\
-                      !?.,;:/\"\"()[]{}<>"; // Removed the quote marks from here
+                      !?.,;:/\\\"\"()[]{}<>"; // Removed the quote marks from here
 
     let mut quote_count = 0;
     let left_quote_index = characters.find("\"").unwrap();

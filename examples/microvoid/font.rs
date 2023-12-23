@@ -68,7 +68,7 @@ impl FontHandle {
                 w -= 1
             }
 
-            console.draw_sprite(&c, x, y, BlitMode::Normal);
+            c.draw_sprite(x, y, BlitMode::Normal, console);
         }
     }
 }

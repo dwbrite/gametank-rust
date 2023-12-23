@@ -5,28 +5,29 @@ extern crate gt_crust;
 
 pub mod system;
 mod font;
+mod gamestates;
+mod stuff;
 
-use core::{iter, mem};
-use core::iter::once;
-use dgtf_macros::string_to_indices;
-use crate::system::scr::*;
-use crate::system::bcr::*;
+use crate::font::FontHandle;
+use crate::gamestates::{GameState, GameStates, StartMenu};
+use crate::stuff::load_assorted_sprites;
 use crate::system::console::*;
 
 #[no_mangle]
 fn main() {
     let mut console = Console::init();
+    load_assorted_sprites(&mut console);
 
-    let minifont = font::FontHandle::init(&mut console, 0, SpriteRamQuadrant::One);
+    let mut ticks = 0u64;
+
+    let mut current_state: GameStates = GameStates::StartMenu(StartMenu::init(&mut console));
 
     loop {
         console.await_vblank();
         console.flip_framebuffer();
 
-        console.draw_box(0, 0, 127, 127, 0b101_00_000);
-        console.draw_box(0, 100, 127, 27, 0b011_10_110);
+        current_state.update_and_draw(ticks, &mut console);
 
-        // TODO: rename that to gt_string?
-        minifont.draw_string(&mut console, 0, 1, &string_to_indices!("Hello traveler, it hath been a time"));
+        ticks+=1; // do we _really_ need to?...
     }
 }

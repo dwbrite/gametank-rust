@@ -2,6 +2,7 @@ use crate::system::bcr::Bcr;
 use crate::system::scr::DmaLocation::Vram;
 use crate::system::scr::MirroredScr;
 use crate::system::vram::VramDma;
+use wyhash;
 
 pub enum SpriteRamQuadrant {
     One,
@@ -42,12 +43,113 @@ pub struct Sprite {
     pub(crate) height: u8,
 }
 
+impl Sprite {
+    pub fn draw_sprite(&self, x: u8, y: u8, blit_mode: BlitMode, console: &mut Console) {
+        let (mut width, mut height) = (self.width, self.height);
+        let (mut gx, mut gy) = (self.vram_x, self.vram_y);
+
+        if blit_mode == BlitMode::FlipX || blit_mode == BlitMode::FlipXY {
+            gx ^= 0xFF;
+            gx -= self.width - 1;
+            width ^= 0b10000000;
+        }
+
+        if blit_mode == BlitMode::FlipY || blit_mode == BlitMode::FlipXY {
+            gy ^= 0xFF;
+            gy -= self.height - 1;
+            height ^= 0b10000000;
+        }
+
+
+        console.control_registers.set_dma_enable(true);
+
+        console.control_registers.set_colorfill_mode(false);
+        console.control_registers.set_vram_bank(self.bank);
+        console.control_registers.set_dma_gcarry(true);
+
+        console.blitter_registers.vram_x.write(gx);
+        console.blitter_registers.vram_y.write(gy);
+        console.blitter_registers.fb_x.write(x);
+        console.blitter_registers.fb_y.write(y);
+        console.blitter_registers.width.write(width);
+        console.blitter_registers.height.write(height);
+        console.blitter_registers.start.write(1);
+
+        unsafe { gt_crust::boot::wait(); }
+        console.blitter_registers.reset_irq();
+    }
+
+    pub fn draw_sprite_with_overscan(&self, mut x: i16, mut y: i16, blit_mode: BlitMode, console: &mut Console) {
+        let (mut width, mut height) = (self.width, self.height);
+        let (mut vram_x, mut vram_y) = (self.vram_x, self.vram_y);
+
+        let (mut new_x, mut new_y) = (x as u8, y as u8);
+
+        // don't render if off screen
+        if x > 127 || y > 127 ||
+            x <= -(width as i16) || y <= -(height as i16) {
+            return
+        }
+
+
+        if x < 0 {
+            width = (width as i16 + x) as u8;
+            vram_x = (vram_x as i16 - x) as u8;
+            new_x = 0;
+        } else if width > (128 - x) as u8 {
+            width = (128 - x) as u8;
+            // if width == 0 {
+            //     return
+            // }
+        }
+
+        if y < 0 {
+            height = (height as i16 + y) as u8;
+            vram_y = (vram_y as i16 - y) as u8;
+            new_y = 0;
+        } else if y >= (127 - height) as i16 {
+            height = 127 - (y as u8);
+        }
+
+        if blit_mode == BlitMode::FlipX || blit_mode == BlitMode::FlipXY {
+            vram_x ^= 0xFF;
+            vram_x -= self.width - 1;
+            width ^= 0b10000000;
+        }
+
+        if blit_mode == BlitMode::FlipY || blit_mode == BlitMode::FlipXY {
+            vram_y ^= 0xFF;
+            vram_y -= self.height - 1;
+            height ^= 0b10000000;
+        }
+
+
+        console.control_registers.set_dma_enable(true);
+
+        console.control_registers.set_colorfill_mode(false);
+        console.control_registers.set_vram_bank(self.bank);
+        console.control_registers.set_dma_gcarry(true);
+
+        console.blitter_registers.vram_x.write(vram_x);
+        console.blitter_registers.vram_y.write(vram_y);
+        console.blitter_registers.fb_x.write(new_x);
+        console.blitter_registers.fb_y.write(new_y);
+        console.blitter_registers.width.write(width);
+        console.blitter_registers.height.write(height);
+        console.blitter_registers.start.write(1);
+
+        unsafe { gt_crust::boot::wait(); }
+        console.blitter_registers.reset_irq();
+    }
+}
+
 
 /// the public friendly APIs?
 pub struct Console {
     control_registers: MirroredScr,
     blitter_registers: &'static mut Bcr,
-    vram: VramDma
+    vram: VramDma,
+    // rng_seed: u64
 }
 
 impl Console {
@@ -61,6 +163,7 @@ impl Console {
             control_registers: scr,
             blitter_registers: bcr,
             vram: VramDma::new(),
+            // rng_seed: 42069
         }
     }
 
@@ -74,48 +177,13 @@ impl Console {
         &mut self.vram
     }
 
-    pub fn draw_sprite(&mut self, sprite: &Sprite, x: u8, y: u8, blit_mode: BlitMode) {
-        let (mut width, mut height) = (sprite.width, sprite.height);
-        let (mut gx, mut gy) = (sprite.vram_x, sprite.vram_y);
-
-        if blit_mode == BlitMode::FlipX || blit_mode == BlitMode::FlipXY {
-            gx ^= 0xFF;
-            gx -= sprite.width - 1;
-            width ^= 0b10000000;
-        }
-
-        if blit_mode == BlitMode::FlipY || blit_mode == BlitMode::FlipXY {
-            gy ^= 0xFF;
-            gy -= sprite.height - 1;
-            height ^= 0b10000000;
-        }
-
-
-        self.control_registers.set_dma_enable(true);
-
-        self.control_registers.set_colorfill_mode(false);
-        self.control_registers.set_vram_bank(sprite.bank);
-        self.control_registers.set_dma_gcarry(true);
-
-        self.blitter_registers.gx.write(gx);
-        self.blitter_registers.gy.write(gy);
-        self.blitter_registers.vx.write(x);
-        self.blitter_registers.vy.write(y);
-        self.blitter_registers.width.write(width);
-        self.blitter_registers.height.write(height);
-        self.blitter_registers.start.write(1);
-
-        unsafe { gt_crust::boot::wait(); }
-        self.blitter_registers.reset_irq();
-    }
-
     pub fn draw_box(&mut self, x:u8, y:u8, w:u8, h:u8, c:u8) {
         self.control_registers.set_dma_enable(true);
 
         self.control_registers.set_colorfill_mode(true);
 
-        self.blitter_registers.vx.write(x);
-        self.blitter_registers.vy.write(y);
+        self.blitter_registers.fb_x.write(x);
+        self.blitter_registers.fb_y.write(y);
         self.blitter_registers.width.write(w);
         self.blitter_registers.height.write(h);
         self.blitter_registers.color.write(c);
@@ -130,10 +198,10 @@ impl Console {
 
         self.control_registers.set_colorfill_mode(false);
 
-        self.blitter_registers.vx.write(128);
-        self.blitter_registers.vy.write(128);
-        self.blitter_registers.gx.write(quad.value_gx());
-        self.blitter_registers.gy.write(quad.value_gy());
+        self.blitter_registers.fb_x.write(128);
+        self.blitter_registers.fb_y.write(128);
+        self.blitter_registers.vram_x.write(quad.value_gx());
+        self.blitter_registers.vram_y.write(quad.value_gy());
         self.blitter_registers.width.write(1);
         self.blitter_registers.height.write(1);
         self.blitter_registers.start.write(1);

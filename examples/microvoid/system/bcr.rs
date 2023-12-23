@@ -2,10 +2,10 @@ use volatile::Volatile;
 
 #[repr(C,packed)]
 pub struct Bcr {
-    pub vx: Volatile<u8>,
-    pub vy: Volatile<u8>,
-    pub gx: Volatile<u8>,
-    pub gy: Volatile<u8>,
+    pub fb_x: Volatile<u8>,
+    pub fb_y: Volatile<u8>,
+    pub vram_x: Volatile<u8>,
+    pub vram_y: Volatile<u8>,
     pub width: Volatile<u8>,
     pub height: Volatile<u8>,
     pub start: Volatile<u8>,
