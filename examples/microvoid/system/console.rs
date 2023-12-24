@@ -3,6 +3,8 @@ use crate::system::scr::DmaLocation::Vram;
 use crate::system::scr::MirroredScr;
 use crate::system::vram::VramDma;
 use wyhash;
+use crate::system::inputs;
+use crate::system::inputs::{GamePadPort, GameshockOne};
 
 pub enum SpriteRamQuadrant {
     One,
@@ -98,17 +100,16 @@ impl Sprite {
             new_x = 0;
         } else if width > (128 - x) as u8 {
             width = (128 - x) as u8;
-            // if width == 0 {
-            //     return
-            // }
         }
 
+
+        // TODO: fix bug when overscanning near 0y with FlipY
         if y < 0 {
             height = (height as i16 + y) as u8;
             vram_y = (vram_y as i16 - y) as u8;
             new_y = 0;
-        } else if y >= (127 - height) as i16 {
-            height = 127 - (y as u8);
+        } else if height > (128 - y) as u8 {
+            height = (128 - y) as u8;
         }
 
         if blit_mode == BlitMode::FlipX || blit_mode == BlitMode::FlipXY {
@@ -149,6 +150,8 @@ pub struct Console {
     control_registers: MirroredScr,
     blitter_registers: &'static mut Bcr,
     vram: VramDma,
+    pub gamepad_1: GameshockOne,
+    pub gamepad_2: GameshockOne,
     // rng_seed: u64
 }
 
@@ -163,6 +166,8 @@ impl Console {
             control_registers: scr,
             blitter_registers: bcr,
             vram: VramDma::new(),
+            gamepad_1: GameshockOne::init(GamePadPort::One),
+            gamepad_2: GameshockOne::init(GamePadPort::Two),
             // rng_seed: 42069
         }
     }

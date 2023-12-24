@@ -26,6 +26,7 @@ fn main() {
         console.await_vblank();
         console.flip_framebuffer();
 
+        console.gamepad_1.read();
         current_state.update_and_draw(ticks, &mut console);
 
         ticks+=1; // do we _really_ need to?...
