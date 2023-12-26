@@ -1,73 +1,99 @@
 use gt_crust::boot::wait;
-use crate::system::console::{Console, Sprite};
+use crate::system::console::{BlitMode, Console, SpriteRamQuadrant};
+use crate::system::position::{Dimensions, FancyPosition, ScreenSpacePosition};
+use crate::system::sprite::{Sprite, VramBank};
 
 pub struct Grass {
-    pub array: [usize; 12],
+    pub array: [usize; 5], // 32*4 = 128, +1 for overscan
 }
 
 impl Grass {
-    #[inline(always)]
-    fn grass_draw_helper(&self, grass_idx: usize, x: i16, is_first: bool, console: &mut Console) {
+    #[inline(never)]
+    fn grass_draw_helper(&self, grass_idx: usize, mut position: &mut FancyPosition, console: &mut Console) {
         let sprite_data = crate::stuff::ASSORTED_SPRITES.sprite_data[grass_idx + 8];
         let sprite = Sprite {
-            bank: 0,
-            vram_x: sprite_data.sheet_x + 128, // TODO: add quadrant, never use "hardware coords" for addressing vram
+            bank: VramBank {
+                bank: 0,
+                quadrant: SpriteRamQuadrant::Two,
+            },
+            vram_x: sprite_data.sheet_x, // TODO: add quadrant, never use "hardware coords" for addressing vram
             vram_y: sprite_data.sheet_y + 40,
             width: sprite_data.width,
             height: sprite_data.height,
         };
 
-        let y = (101 - sprite.height) as i16;
+        position.y = 101+64 - sprite.height;
 
-        let (mut width, mut height) = (sprite.width, sprite.height);
-        let (mut vram_x, mut vram_y) = (sprite.vram_x, sprite.vram_y);
+        let mut dimensions = Dimensions {
+            width: sprite.width,
+            height: sprite.height,
+        };
 
-        let (mut new_x, mut new_y) = (x as u8, y as u8);
+        let mut vram_position = ScreenSpacePosition {
+            x: sprite.vram_x + sprite.bank.quadrant.value_gx(),
+            y: sprite.vram_y + sprite.bank.quadrant.value_gy(),
+        };
 
-        // don't render if off screen
-        if x > 127 || x <= -(width as i16) {
+        let mut fb_position = position.to_screenspace();
+
+        // don't render off screen
+        if position.x >= 192 || position.y >= 192 ||
+            position.x + dimensions.width <= 64  || position.y + dimensions.height <= 64 {
             return
         }
 
-
-        if x < 0 {
-            width = (width as i16 + x) as u8;
-            vram_x = (vram_x as i16 - x) as u8;
-            new_x = 0;
-        } else if width > (128 - x) as u8 {
-            width = (128 - x) as u8;
+        if position.x < 64 {
+            let off_screen_amount = 64 - position.x;
+            dimensions.width = (dimensions.width + position.x) - 64;
+            vram_position.x = vram_position.x + off_screen_amount; // add the change in width
+            fb_position.x = 0;
+        } else if dimensions.width > 192 - position.x {
+            dimensions.width = 192 - position.x;
         }
 
-
-        if !is_first {
-            while console.blitter_registers.start.read() == 1 {}
-        } else {
-            console.control_registers.set_dma_enable(true);
-
-            console.control_registers.set_colorfill_mode(false);
-            console.control_registers.set_vram_bank(sprite.bank);
-            console.control_registers.set_dma_gcarry(true);
+        if position.y < 64 {
+            let off_screen_amount = 64 - position.y;
+            dimensions.height = (dimensions.height + position.y) - 64;
+            vram_position.y = vram_position.y + off_screen_amount; // add the change in width
+            fb_position.y = 0;
+        } else if dimensions.height > 192 - position.y {
+            dimensions.height = 192 - position.y;
         }
 
-        console.blitter_registers.vram_x.write(vram_x);
-        console.blitter_registers.vram_y.write(vram_y);
-        console.blitter_registers.fb_x.write(new_x);
-        console.blitter_registers.fb_y.write(new_y);
-        console.blitter_registers.width.write(width);
-        console.blitter_registers.height.write(height-1);
+        while console.blitter_registers.start.read() == 1 {}
+
+        console.control_registers.set_dma_enable(true);
+
+        console.control_registers.set_colorfill_mode(false);
+        console.control_registers.set_vram_bank(sprite.bank.bank);
+        console.control_registers.set_dma_gcarry(true);
+
+        console.blitter_registers.vram_x.write(vram_position.x);
+        console.blitter_registers.vram_y.write(vram_position.y);
+        console.blitter_registers.fb_x.write(fb_position.x);
+        console.blitter_registers.fb_y.write(fb_position.y);
+        console.blitter_registers.width.write(dimensions.width);
+        console.blitter_registers.height.write(dimensions.height - 1);
         console.blitter_registers.start.write(1);
     }
 
-    #[inline(always)]
-    pub fn draw_grass(&self, position: i16, console: &mut Console) {
-        for (c, i) in self.array.iter().enumerate() {
-            self.grass_draw_helper(*i, (c*32) as i16 - (position), c==0, console);
+    #[inline(never)]
+    pub fn draw_grass(&self, og_position: FancyPosition, console: &mut Console) {
+        let mut position = FancyPosition {
+            x: 0,
+            y: 0,
+        };
+        for (c, &i) in self.array.iter().enumerate() {
+            position.x = ((c * 32) - (og_position.x as usize)) as u8;
+            self.grass_draw_helper(i, &mut position, console);
         }
-        // redraw the first 4 at the end to loop smoothly
-        for c in 0..4 {
-            self.grass_draw_helper(self.array[c], ((c+12)*32) as i16 - (position), c==0, console);
+
+        for i in 0..4 {
+            position.x = (((5+i)*32) - (og_position.x as usize)) as u8;
+            self.grass_draw_helper(self.array[i], &mut position, console);
         }
         // TODO: decide if this blitter wait is necessary
         unsafe { wait(); }
+        console.blitter_registers.reset_irq();
     }
 }

@@ -10,7 +10,6 @@ mod stuff;
 mod aesthetic;
 mod gamer;
 
-use crate::font::FontHandle;
 use crate::gamestates::{GameState, GameStates};
 use crate::gamestates::start_menu::StartMenu;
 use crate::stuff::load_assorted_sprites;

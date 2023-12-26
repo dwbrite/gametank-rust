@@ -1,7 +1,7 @@
 MEMORY
 {
-    ZP (rw) : ORIGIN = 0x0020, LENGTH = 0x00DF /* zero page up to 0x100, using 0x00 through 0x1F for imaginary reg */
-	RAM (rwx) : ORIGIN = 0x0400, LENGTH = 0x1BFF /* I have no idea how the software stack works. */
+    ZP (rw) : ORIGIN = 0x0040, LENGTH = 0x00BF /* zero page up to 0x100, using 0x00 through 0x3F for imaginary reg */
+	RAM (rwx) : ORIGIN = 0x0200, LENGTH = 0x1DFF /* I have no idea how the software stack works. */
 	SCR (w) : ORIGIN = 0x2000, LENGTH = 0x0007 /* write only SCR, so the linker doesn't try to LDA $2000 */
 	FLASH (rw) : ORIGIN = 0x8000, LENGTH = 0x7FF9 /* flash before vector table */
     VECTOR_TABLE (rw) : ORIGIN = 0xFFFA, LENGTH = 6
@@ -80,5 +80,38 @@ __rc28 = 0x1C;
 __rc29 = 0x1D;
 __rc30 = 0x1E;
 __rc31 = 0x1F;
+__rc32 = 0x20;
+__rc33 = 0x21;
+__rc34 = 0x22;
+__rc35 = 0x23;
+__rc36 = 0x24;
+__rc37 = 0x25;
+__rc38 = 0x26;
+__rc39 = 0x27;
+__rc40 = 0x28;
+__rc41 = 0x29;
+__rc42 = 0x2A;
+__rc43 = 0x2B;
+__rc44 = 0x2C;
+__rc45 = 0x2D;
+__rc46 = 0x2E;
+__rc47 = 0x2F;
+__rc48 = 0x30;
+__rc49 = 0x31;
+__rc50 = 0x32;
+__rc51 = 0x33;
+__rc52 = 0x34;
+__rc53 = 0x35;
+__rc54 = 0x36;
+__rc55 = 0x37;
+__rc56 = 0x38;
+__rc57 = 0x39;
+__rc58 = 0x3A;
+__rc59 = 0x3B;
+__rc60 = 0x3C;
+__rc61 = 0x3D;
+__rc62 = 0x3E;
+__rc63 = 0x3F;
+
  
 

@@ -1,4 +1,7 @@
+use gt_crust::boot::wait;
 use crate::system::console::{BlitMode, Console, SpriteRamQuadrant};
+use crate::system::sprite;
+use crate::system::sprite::VramBank;
 
 // creates a Sprite and SpriteSheet struct in this module, as well as a static SpriteSheet MINIFONT_SPRITES
 dgtf_macros::include_spritesheet!(MINIFONT_SPRITES, "examples/microvoid/assets/minifont-p.bmp", "examples/microvoid/assets/minifont-p.json");
@@ -51,8 +54,11 @@ impl FontHandle {
         let mut w = 0;
         let mut is_first = true;
         for char in string {
-            let c = crate::Sprite {
-                bank: self.bank,
+            let c = sprite::Sprite {
+                bank: VramBank {
+                    bank: self.bank,
+                    quadrant: self.quadrant,
+                },
                 vram_x: self.spritesheet.sprite_data[*char].sheet_x,
                 vram_y: 40 + self.spritesheet.sprite_data[*char].sheet_y,
                 width: self.spritesheet.sprite_data[*char].width,
@@ -71,20 +77,20 @@ impl FontHandle {
 
             string_draw_helper(c, x, y, is_first, console);
             is_first = false;
-            //
-            // c.draw_sprite(x, y, BlitMode::Normal, console);
         }
+        unsafe { wait() }
+        console.blitter_registers.reset_irq();
     }
 }
 
-fn string_draw_helper(sprite: crate::Sprite, x: u8, y: u8, is_first: bool, console: &mut Console) {
+fn string_draw_helper(sprite: sprite::Sprite, x: u8, y: u8, is_first: bool, console: &mut Console) {
     if !is_first {
         while console.blitter_registers.start.read() == 1 {}
     } else {
         console.control_registers.set_dma_enable(true);
 
         console.control_registers.set_colorfill_mode(false);
-        console.control_registers.set_vram_bank(sprite.bank);
+        console.control_registers.set_vram_bank(sprite.bank.bank);
         console.control_registers.set_dma_gcarry(true);
     }
 

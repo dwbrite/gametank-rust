@@ -1,4 +1,7 @@
+use crate::system::{console, sprite};
 use crate::system::console::{BlitMode, Console, SpriteRamQuadrant};
+use crate::system::position::{FancyPosition, ScreenSpacePosition};
+use crate::system::sprite::VramBank;
 // creates a Sprite and SpriteSheet struct in this module, as well as a static SpriteSheet GAMER_SPRITES
 dgtf_macros::include_spritesheet!(GAMER_SPRITES, "examples/microvoid/assets/gamer_con_polvo.bmp", "examples/microvoid/assets/gamer_con_polvo.json");
 
@@ -7,13 +10,13 @@ pub const RUNNING: usize = 1;
 pub const JUMPING: usize = 9;
 pub const FALLING: usize = 10;
 pub const SLIDING: usize = 11;
-pub const FRAME_TIMES: [u8; 12] =   [0, 5, 5, 5, 5, 5, 5, 5, 4,  0,  0,  0]; // this was 3x what it should be at 60fps???
+pub const FRAME_TIMES: [u8; 12] =   [0,  5,  5,  5,  5,  5,  5,  5,  4,  0,  0,  0]; // this was 3x what it should be at 60fps???
 pub const X_OFFSET: [u8; 12] =      [2,  0,  1,  2,  2,  0,  2,  2,  2,  2,  2,  6];
 pub const Y_OFFSET: [u8; 12] =      [0,  0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0];
 
 
 
-enum GamerStates {
+pub enum GamerStates {
     Standing,
     Running,
     Jumping,
@@ -69,6 +72,7 @@ impl Gamer {
             spritesheet: sprite_sheet,
             frame_counter: 0,
             animation: FALLING,
+            state: GamerStates::Falling,
             y: 100 - sprite_sheet.sprite_data[FALLING].height,
         }
     }
@@ -79,15 +83,24 @@ impl Gamer {
 
     pub fn update_and_draw(&mut self, mut console: &mut Console) {
         let sprite_data = self.spritesheet.sprite_data[self.animation];
-        let sprite = crate::system::console::Sprite {
-            bank: self.bank,
+        let sprite = sprite::Sprite {
+            bank: VramBank {
+                bank: self.bank,
+                quadrant: self.quadrant.clone(),
+            },
             vram_x: sprite_data.sheet_x, // TODO: add quadrant, never use "hardware coords" for addressing vram
             vram_y: sprite_data.sheet_y + 40,
             width: sprite_data.width,
             height: sprite_data.height,
         };
+
+        let position = ScreenSpacePosition {
+            x: 24 - X_OFFSET[self.animation],
+            y: 100 - sprite.height - self.y - Y_OFFSET[self.animation],
+        };
+
         // TODO, y calculation is jank/temporary. We'll need hitboxes and sprite offsets.
-        sprite.draw_sprite(24 - X_OFFSET[self.animation], 100 - sprite.height - self.y - Y_OFFSET[self.animation], BlitMode::Normal, console);
+        sprite.draw_sprite(position, BlitMode::Normal, console);
 
         self.frame_counter += 1;
 

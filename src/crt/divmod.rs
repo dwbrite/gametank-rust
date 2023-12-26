@@ -51,7 +51,7 @@ macro_rules! impl_div_mod {
         }
 
         #[no_mangle]
-        pub fn $fn_divmod(mut a: $t, b: $t, rem: &mut $t) -> $t {
+        pub fn $fn_divmod(a: $t, b: $t, rem: &mut $t) -> $t {
             if b == 0 {
                 panic!("Division by zero");
             }

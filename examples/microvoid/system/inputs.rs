@@ -30,11 +30,14 @@ pub fn gpr2() -> &'static mut Volatile<u8> {
 
 // new order: start, a, c, b, up, down, left, right
 
+
+#[derive(Debug, Copy, Clone)]
 pub enum GamePadPort {
     One,
     Two
 }
 
+#[derive(Debug, Copy, Clone)]
 pub enum Buttons {
     Start,
     A,
@@ -108,17 +111,17 @@ impl GameshockOne {
     }
 
     #[inline]
-    pub fn is_pressed(&self, button: &Buttons) -> bool {
+    pub fn is_pressed(&self, button: Buttons) -> bool {
         self.buttons.get_bit(button.idx())
     }
 
     #[inline]
-    pub fn was_pressed(&self, button: &Buttons) -> bool {
+    pub fn was_pressed(&self, button: Buttons) -> bool {
         self.buttons_last.get_bit(button.idx())
     }
 
     #[inline]
-    pub fn was_released(&self, button: &Buttons) -> bool {
+    pub fn was_released(&self, button: Buttons) -> bool {
         !self.is_pressed(button) && self.was_pressed(button)
     }
 }
