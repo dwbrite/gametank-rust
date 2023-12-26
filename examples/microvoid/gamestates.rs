@@ -10,7 +10,7 @@ pub enum GameStates {
 
 #[enum_delegate::register]
 pub trait GameState {
-    fn update_and_draw(&mut self, ticks: u64, console: &mut Console);
+    fn update_and_draw(self, ticks: u64, console: &mut Console) -> GameStates;
 }
 
 pub struct StartMenu {
@@ -41,7 +41,7 @@ impl StartMenu {
 
     fn draw_start_text(&mut self, ticks: u64, mut console: &mut Console) {
         let y_offset = (ticks % (78)) / 26;
-        self.minifont.draw_string(&mut console, 27, 80 - y_offset as u8, &string_to_indices!("Press Start to Game"));
+        self.minifont.draw_string(&mut console, 27, 80, &string_to_indices!("Press Start, Gamer"));
     }
 
     fn draw_clouds(&mut self, mut console: &mut Console) {
@@ -68,8 +68,7 @@ impl StartMenu {
 
 
 impl GameState for StartMenu {
-    fn update_and_draw(&mut self, ticks: u64, mut console: &mut Console) {
-        self.draw_background(console);
+    fn update_and_draw(mut self, ticks: u64, mut console: &mut Console) -> GameStates {
         self.draw_background(console);
         self.draw_clouds(console);
         self.draw_start_text(ticks, console);
@@ -116,5 +115,7 @@ impl GameState for StartMenu {
         if self.position >= (128*3) {
             self.position = 0;
         }
+
+        GameStates::StartMenu(self)
     }
 }

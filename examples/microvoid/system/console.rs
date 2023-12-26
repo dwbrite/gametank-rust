@@ -77,7 +77,9 @@ impl Sprite {
         console.blitter_registers.height.write(height);
         console.blitter_registers.start.write(1);
 
-        unsafe { gt_crust::boot::wait(); }
+        while console.blitter_registers.start.read() == 1 {}
+        //
+        // unsafe { gt_crust::boot::wait(); }
         console.blitter_registers.reset_irq();
     }
 
@@ -139,8 +141,9 @@ impl Sprite {
         console.blitter_registers.height.write(height);
         console.blitter_registers.start.write(1);
 
-        unsafe { gt_crust::boot::wait(); }
-        console.blitter_registers.reset_irq();
+        while console.blitter_registers.start.read() == 1 {}
+        // unsafe { gt_crust::boot::wait(); }
+        // console.blitter_registers.reset_irq();
     }
 }
 
@@ -211,8 +214,10 @@ impl Console {
         self.blitter_registers.height.write(1);
         self.blitter_registers.start.write(1);
 
-        unsafe { gt_crust::boot::wait(); }
-        self.blitter_registers.reset_irq();
+        // unsafe { gt_crust::boot::wait(); }
+        while self.blitter_registers.start.read() == 1 {}
+        // unsafe { gt_crust::boot::wait(); }
+        // self.blitter_registers.reset_irq();
     }
 
     pub fn await_vblank(&mut self) {

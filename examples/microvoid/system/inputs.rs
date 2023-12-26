@@ -103,7 +103,7 @@ impl GameshockOne {
         }
         self.buttons_last = self.buttons;
 
-        // bits: start, a | c, b, up, down, left, right /*!(bytes.0 >> 4) | */
+        // bits: start, a | c, b, up, down, left, right
         self.buttons = ((!bytes.0 << 2) & 0b1100_0000) | (!bytes.1 & 0b0011_1111);
     }
 
