@@ -49,6 +49,7 @@ impl FontHandle {
 
     pub fn draw_string(&self, console: &mut Console, x: u8, y: u8, string: &[usize]) {
         let mut w = 0;
+        let mut is_first = true;
         for char in string {
             let c = crate::Sprite {
                 bank: self.bank,
@@ -68,9 +69,30 @@ impl FontHandle {
                 w -= 1
             }
 
-            c.draw_sprite(x, y, BlitMode::Normal, console);
+            string_draw_helper(c, x, y, is_first, console);
+            is_first = false;
+            //
+            // c.draw_sprite(x, y, BlitMode::Normal, console);
         }
     }
 }
 
+fn string_draw_helper(sprite: crate::Sprite, x: u8, y: u8, is_first: bool, console: &mut Console) {
+    if !is_first {
+        while console.blitter_registers.start.read() == 1 {}
+    } else {
+        console.control_registers.set_dma_enable(true);
 
+        console.control_registers.set_colorfill_mode(false);
+        console.control_registers.set_vram_bank(sprite.bank);
+        console.control_registers.set_dma_gcarry(true);
+    }
+
+    console.blitter_registers.vram_x.write(sprite.vram_x);
+    console.blitter_registers.vram_y.write(sprite.vram_y);
+    console.blitter_registers.fb_x.write(x);
+    console.blitter_registers.fb_y.write(y);
+    console.blitter_registers.width.write(sprite.width);
+    console.blitter_registers.height.write(sprite.height);
+    console.blitter_registers.start.write(1);
+}

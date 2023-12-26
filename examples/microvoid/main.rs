@@ -7,9 +7,12 @@ pub mod system;
 mod font;
 mod gamestates;
 mod stuff;
+mod aesthetic;
+mod gamer;
 
 use crate::font::FontHandle;
-use crate::gamestates::{GameState, GameStates, StartMenu};
+use crate::gamestates::{GameState, GameStates};
+use crate::gamestates::start_menu::StartMenu;
 use crate::stuff::load_assorted_sprites;
 use crate::system::console::*;
 
@@ -20,6 +23,7 @@ fn main() {
 
     let mut ticks = 0u64;
 
+    // keeping gamestates very light, so we don't overflow the stack
     let mut current_state: GameStates = GameStates::StartMenu(StartMenu::init(&mut console));
 
     loop {

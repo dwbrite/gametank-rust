@@ -1,23 +1,18 @@
 use crate::font::FontHandle;
 use crate::system::console::{BlitMode, Console, Sprite, SpriteRamQuadrant};
 use dgtf_macros::string_to_indices;
+use crate::aesthetic::grass::Grass;
+use crate::gamestates::{GameState, GameStates};
+use crate::gamestates::runup::Runup;
 use crate::system::inputs::Buttons;
 
-#[enum_delegate::implement(GameState)]
-pub enum GameStates {
-    StartMenu(StartMenu),
-}
-
-#[enum_delegate::register]
-pub trait GameState {
-    fn update_and_draw(self, ticks: u64, console: &mut Console) -> GameStates;
-}
+pub const STARTING_GRASS: [usize; 12] = [0, 1, 2, 3, 4, 5, 6, 7, 5, 3, 6, 2];
 
 pub struct StartMenu {
-    minifont: FontHandle,
-    position: i16, // range of -128..255 as a "3 pane" recycled view
-    clyde_x: i16,
-    clyde_y: i16,
+    pub minifont: FontHandle,
+    pub position: i16, // range of -128..255 as a "3 pane" recycled view
+    pub grass: Grass,
+    is_seeded: bool,
 }
 
 impl StartMenu {
@@ -27,8 +22,10 @@ impl StartMenu {
         Self {
             minifont,
             position: 0,
-            clyde_y: 25,
-            clyde_x: 25
+            grass: Grass {
+                array: STARTING_GRASS,
+            },
+            is_seeded: false,
         }
     }
 
@@ -40,8 +37,8 @@ impl StartMenu {
     }
 
     fn draw_start_text(&mut self, ticks: u64, mut console: &mut Console) {
-        let y_offset = (ticks % (78)) / 26;
-        self.minifont.draw_string(&mut console, 27, 80, &string_to_indices!("Press Start, Gamer"));
+        let y_offset = (ticks % (78)) / 26; // 3 states, 26 ticks long each
+        self.minifont.draw_string(&mut console, 30, 80 - (y_offset as u8), &string_to_indices!("Press Start, Gamer"));
     }
 
     fn draw_clouds(&mut self, mut console: &mut Console) {
@@ -60,10 +57,6 @@ impl StartMenu {
         sprite.draw_sprite_with_overscan(cloud_1.0 - self.position, cloud_1.1, BlitMode::Normal, &mut console);
         sprite.draw_sprite_with_overscan(cloud_2.0 - self.position, cloud_2.1, BlitMode::Normal, &mut console);
     }
-
-    fn yeet(self) -> FontHandle {
-        self.minifont
-    }
 }
 
 
@@ -72,43 +65,17 @@ impl GameState for StartMenu {
         self.draw_background(console);
         self.draw_clouds(console);
         self.draw_start_text(ticks, console);
+        self.grass.draw_grass(self.position, console);
 
-        if ticks % 3 == 0 {
-            if console.gamepad_1.is_pressed(&Buttons::Left) {
-                self.clyde_x -= 1;
-            }
-            if console.gamepad_1.is_pressed(&Buttons::Right) {
-                self.clyde_x += 1;
-            }
-            if console.gamepad_1.is_pressed(&Buttons::Up) {
-                self.clyde_y -= 1;
-            }
-            if console.gamepad_1.is_pressed(&Buttons::Down) {
-                self.clyde_y += 1;
-            }
+
+        if self.is_seeded && ticks % 16 == 0 {
+            return GameStates::Runup(Runup::init(self, &mut console))
         }
 
-        let i = if console.gamepad_1.is_pressed(&Buttons::C) {
-            5
-        } else {
-            4
-        };
-
-        let sprite_data = crate::stuff::ASSORTED_SPRITES.sprite_data[i];
-        let sprite = Sprite {
-            bank: 0,
-            vram_x: sprite_data.sheet_x + 128, // TODO: add quadrant, never use "hardware coords" for addressing vram
-            vram_y: sprite_data.sheet_y + 40,
-            width: sprite_data.width,
-            height: sprite_data.height,
-        };
-
-        if console.gamepad_1.is_pressed(&Buttons::A) {
-            sprite.draw_sprite_with_overscan(self.clyde_x, self.clyde_y, BlitMode::FlipX, console);
-        } else if console.gamepad_1.is_pressed(&Buttons::B) {
-            sprite.draw_sprite_with_overscan(self.clyde_x, self.clyde_y, BlitMode::Normal, console);
+        if console.gamepad_1.is_pressed(&Buttons::Start) {
+            console.preseed_rng(ticks);
+            self.is_seeded = true;
         }
-
 
         self.position += 1;
 

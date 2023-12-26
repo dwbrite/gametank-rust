@@ -1,7 +1,7 @@
 MEMORY
 {
     ZP (rw) : ORIGIN = 0x0020, LENGTH = 0x00DF /* zero page up to 0x100, using 0x00 through 0x1F for imaginary reg */
-	RAM (rwx) : ORIGIN = 0x0200, LENGTH = 0x1DFF /* RAM fills up to 0x2000 after the hardware stack */
+	RAM (rwx) : ORIGIN = 0x0400, LENGTH = 0x1BFF /* I have no idea how the software stack works. */
 	SCR (w) : ORIGIN = 0x2000, LENGTH = 0x0007 /* write only SCR, so the linker doesn't try to LDA $2000 */
 	FLASH (rw) : ORIGIN = 0x8000, LENGTH = 0x7FF9 /* flash before vector table */
     VECTOR_TABLE (rw) : ORIGIN = 0xFFFA, LENGTH = 6

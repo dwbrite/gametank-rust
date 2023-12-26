@@ -3,6 +3,7 @@ use crate::system::scr::DmaLocation::Vram;
 use crate::system::scr::MirroredScr;
 use crate::system::vram::VramDma;
 use wyhash;
+use wyhash::wyrng;
 use crate::system::inputs;
 use crate::system::inputs::{GamePadPort, GameshockOne};
 
@@ -46,6 +47,7 @@ pub struct Sprite {
 }
 
 impl Sprite {
+    // TODO: add function to draw sprite without waiting, for optimization - maybe add private "inline always" version for code-reuse
     pub fn draw_sprite(&self, x: u8, y: u8, blit_mode: BlitMode, console: &mut Console) {
         let (mut width, mut height) = (self.width, self.height);
         let (mut gx, mut gy) = (self.vram_x, self.vram_y);
@@ -78,9 +80,10 @@ impl Sprite {
         console.blitter_registers.start.write(1);
 
         while console.blitter_registers.start.read() == 1 {}
+
         //
         // unsafe { gt_crust::boot::wait(); }
-        console.blitter_registers.reset_irq();
+        // console.blitter_registers.reset_irq();
     }
 
     pub fn draw_sprite_with_overscan(&self, mut x: i16, mut y: i16, blit_mode: BlitMode, console: &mut Console) {
@@ -150,12 +153,13 @@ impl Sprite {
 
 /// the public friendly APIs?
 pub struct Console {
-    control_registers: MirroredScr,
-    blitter_registers: &'static mut Bcr,
+    pub(crate) control_registers: MirroredScr,
+    pub(crate) blitter_registers: &'static mut Bcr,
     vram: VramDma,
     pub gamepad_1: GameshockOne,
     pub gamepad_2: GameshockOne,
-    // rng_seed: u64
+    rng_seed: u64 // TODO: make an optional struct for rng?
+    // TODO: maybe generate a bunch of rng
 }
 
 impl Console {
@@ -171,8 +175,16 @@ impl Console {
             vram: VramDma::new(),
             gamepad_1: GameshockOne::init(GamePadPort::One),
             gamepad_2: GameshockOne::init(GamePadPort::Two),
-            // rng_seed: 42069
+            rng_seed: 69420
         }
+    }
+
+    pub fn preseed_rng(&mut self, seed: u64) {
+        self.rng_seed = seed
+    }
+
+    pub fn rng(&mut self) -> u64 {
+        wyrng(&mut self.rng_seed)
     }
 
 
@@ -186,6 +198,8 @@ impl Console {
     }
 
     pub fn draw_box(&mut self, x:u8, y:u8, w:u8, h:u8, c:u8) {
+        // while self.blitter_registers.start.read() != 0 {}
+
         self.control_registers.set_dma_enable(true);
 
         self.control_registers.set_colorfill_mode(true);
@@ -197,6 +211,7 @@ impl Console {
         self.blitter_registers.color.write(c);
         self.blitter_registers.start.write(1);
 
+        //
         unsafe { gt_crust::boot::wait(); }
         self.blitter_registers.reset_irq();
     }
@@ -214,10 +229,9 @@ impl Console {
         self.blitter_registers.height.write(1);
         self.blitter_registers.start.write(1);
 
-        // unsafe { gt_crust::boot::wait(); }
-        while self.blitter_registers.start.read() == 1 {}
-        // unsafe { gt_crust::boot::wait(); }
-        // self.blitter_registers.reset_irq();
+        // while self.blitter_registers.start.read() == 1 {}
+        unsafe { gt_crust::boot::wait(); }
+        self.blitter_registers.reset_irq();
     }
 
     pub fn await_vblank(&mut self) {
