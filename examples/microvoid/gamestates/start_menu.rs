@@ -50,11 +50,6 @@ impl GameState for StartMenu {
         self.draw_start_text(ticks, console);
         self.grass.draw_grass(self.position, console);
 
-
-        if self.is_seeded && ticks % 16 == 0 {
-            return GameStates::Runup(Runup::init(self, &mut console))
-        }
-
         if console.gamepad_1.is_pressed(Buttons::Start) {
             console.preseed_rng(ticks);
             self.is_seeded = true;
@@ -64,6 +59,10 @@ impl GameState for StartMenu {
 
         if self.position.x >= (255) {
             self.position.x = 0;
+        }
+
+        if self.is_seeded && ticks % 16 == 0 {
+            return GameStates::Runup(Runup::init(self, &mut console))
         }
 
         GameStates::StartMenu(self)

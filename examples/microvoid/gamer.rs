@@ -1,29 +1,48 @@
+use fixed::{FixedI16, FixedU16};
+use fixed::types::extra::U8;
+use crate::gamer::GamerStates::{Falling, Jumping, Running, Sliding, Standing};
 use crate::system::{console, sprite};
 use crate::system::console::{BlitMode, Console, SpriteRamQuadrant};
-use crate::system::position::{FancyPosition, ScreenSpacePosition};
+use crate::system::inputs::Buttons;
+use crate::system::position::{FancyPosition, ScreenSpacePosition, SubpixelFancyPosition};
 use crate::system::sprite::VramBank;
+
 // creates a Sprite and SpriteSheet struct in this module, as well as a static SpriteSheet GAMER_SPRITES
 dgtf_macros::include_spritesheet!(GAMER_SPRITES, "examples/microvoid/assets/gamer_con_polvo.bmp", "examples/microvoid/assets/gamer_con_polvo.json");
-
-pub const STANDING: usize = 0;
-pub const RUNNING: usize = 1;
-pub const JUMPING: usize = 9;
-pub const FALLING: usize = 10;
-pub const SLIDING: usize = 11;
+//
+// pub const STANDING: usize = 0;
+// pub const RUNNING: usize = 1;
+// pub const JUMPING: usize = 9;
+// pub const FALLING: usize = 10;
+// pub const SLIDING: usize = 11;
 pub const FRAME_TIMES: [u8; 12] =   [0,  5,  5,  5,  5,  5,  5,  5,  4,  0,  0,  0]; // this was 3x what it should be at 60fps???
 pub const X_OFFSET: [u8; 12] =      [2,  0,  1,  2,  2,  0,  2,  2,  2,  2,  2,  6];
 pub const Y_OFFSET: [u8; 12] =      [0,  0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0];
 
 
 
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum GamerStates {
     Standing,
     Running,
     Jumping,
     Falling,
     Sliding,
-    // TODO: dying? lol
 }
+
+impl GamerStates {
+    const fn to_animation_idx(&self) -> usize {
+        match self {
+            Standing => 0,
+            Running => 1,
+            Jumping => 9,
+            Falling => 10,
+            Sliding => 11
+        }
+    }
+}
+
+
 pub struct Gamer {
     pub bank: u8,
     pub quadrant: SpriteRamQuadrant,
@@ -31,8 +50,11 @@ pub struct Gamer {
     pub frame_counter: u8,
     pub animation: usize,
     pub state: GamerStates,
-    pub y: u8,
-
+    pub subpixel_pos: SubpixelFancyPosition,
+    pub holding_jump: bool,
+    pub velocity: FixedI16<U8>,
+    pub acceleration: FixedI16<U8>,
+    pub no_jump: u8,
 }
 
 impl Gamer {
@@ -71,9 +93,16 @@ impl Gamer {
             quadrant,
             spritesheet: sprite_sheet,
             frame_counter: 0,
-            animation: FALLING,
-            state: GamerStates::Falling,
-            y: 100 - sprite_sheet.sprite_data[FALLING].height,
+            animation: Falling.to_animation_idx(),
+            state: Falling,
+            subpixel_pos: SubpixelFancyPosition {
+                x: FixedU16::<U8>::from_num(24+64),
+                y: FixedU16::<U8>::from_num(0+64-10),
+            },
+            holding_jump: false,
+            velocity: FixedI16::<U8>::from_num(0),
+            acceleration: FixedI16::<U8>::from_num(0),
+            no_jump: 0,
         }
     }
 
@@ -81,7 +110,73 @@ impl Gamer {
         self.animation = anim
     }
 
+    pub fn set_state(&mut self, state: GamerStates) {
+        self.state = state;
+        self.frame_counter = 0;
+        self.animation = state.to_animation_idx();
+    }
+
+    pub fn sim_air_physics(&mut self) {
+        self.acceleration = FixedI16::<U8>::from_num(0.0825);
+
+        if self.holding_jump {
+            if self.state == Jumping {
+                self.acceleration = FixedI16::<U8>::from_num(0.0350);
+            } else {
+                self.acceleration = FixedI16::<U8>::from_num(0.0425);
+            }
+        }
+
+        self.velocity += self.acceleration;
+
+        if self.velocity > FixedI16::<U8>::from_num(2.5) {
+            self.acceleration = FixedI16::<U8>::from_num(0.025);
+            self.velocity = FixedI16::<U8>::from_num(2.5);
+        }
+
+        self.subpixel_pos.y = self.subpixel_pos.y.add_signed(self.velocity);
+
+        if self.subpixel_pos.to_fancy_position().y > 100+64 {
+            self.subpixel_pos.y = FixedU16::<U8>::from(64+100);
+            self.velocity = FixedI16::<U8>::from(0);
+            self.acceleration = FixedI16::<U8>::from(0);
+            self.set_state(Running);
+            self.no_jump = 10;
+        }
+    }
+
     pub fn update_and_draw(&mut self, mut console: &mut Console) {
+        match self.state {
+            Running => {
+                if self.no_jump == 0 && console.gamepad_1.is_pressed(Buttons::A) {
+                    self.holding_jump = true;
+                    self.set_state(Jumping);
+                    self.velocity = FixedI16::<U8>::from_num(-1.75);
+                }
+
+                if self.no_jump > 0 {
+                    self.no_jump -= 1;
+                }
+            }
+            Jumping => {
+                if self.holding_jump && !console.gamepad_1.is_pressed(Buttons::A) {
+                    self.holding_jump = false;
+                }
+
+                if self.velocity > FixedI16::<U8>::from_num(0) {
+                    self.set_state(Falling);
+                }
+
+                self.sim_air_physics();
+            }
+            Falling  => {
+                self.sim_air_physics();
+                /* not implemented */
+            }
+            _ => { /* not implemented */ }
+        }
+
+
         let sprite_data = self.spritesheet.sprite_data[self.animation];
         let sprite = sprite::Sprite {
             bank: VramBank {
@@ -94,13 +189,15 @@ impl Gamer {
             height: sprite_data.height,
         };
 
-        let position = ScreenSpacePosition {
-            x: 24 - X_OFFSET[self.animation],
-            y: 100 - sprite.height - self.y - Y_OFFSET[self.animation],
+        // origin is bottom-left ish
+        let animation_offsets = FancyPosition {
+            x: X_OFFSET[self.animation],
+            y: Y_OFFSET[self.animation] + sprite.height,
         };
 
-        // TODO, y calculation is jank/temporary. We'll need hitboxes and sprite offsets.
-        sprite.draw_sprite(position, BlitMode::Normal, console);
+        let position = self.subpixel_pos.to_fancy_position() - animation_offsets;
+
+        sprite.draw_sprite_with_overscan(position, BlitMode::Normal, console);
 
         self.frame_counter += 1;
 
