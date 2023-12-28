@@ -16,7 +16,8 @@ pub struct Playing {
     position: FancyPosition, // range of -64..192 as a 0.5+1.0+0.5 screen, recycled view
     gamer: Gamer,
     grass: Grass,
-    score: u64,
+    score: u16,
+    bepis: u16,
 }
 
 impl Playing {
@@ -24,9 +25,10 @@ impl Playing {
         Self {
             minifont: runup.minifont,
             position: runup.position,
-            score: 0,
+            score: 36000,
             grass: runup.grass,
             gamer: runup.gamer,
+            bepis: 39000,
         }
     }
 }
@@ -37,11 +39,12 @@ impl GameState for Playing {
         draw_background(console);
         draw_clouds(&self.position, console);
         self.grass.draw_grass(self.position, console);
-
         self.gamer.update_and_draw(console);
 
-        if ticks % 16 == 0 {
-            self.score += 1;
+        self.minifont.draw_number(console, 0, 0, self.score);
+
+        if ticks % 2 == 0 {
+            self.score += 8;
         }
 
         self.position.x += 1;

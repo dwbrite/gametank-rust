@@ -81,18 +81,62 @@ impl FontHandle {
         unsafe { wait() }
         console.blitter_registers.reset_irq();
     }
+
+    // max 65535
+    pub fn draw_number(&self, console: &mut Console, x: u8, y: u8, number: u16) {
+        let mut remainder = number;
+        let mut digits = [0; 5];
+        let mut str_digits = [0usize; 5];
+
+        for (i, &n) in [10000, 1000, 100, 10, 1].iter().enumerate() {
+            if n == 1 {
+                digits[i] = remainder % 10;
+            } else {
+                digits[i] = remainder / n;
+            }
+            remainder -= digits[i] * n;
+
+            if remainder == 0 {
+                break;
+            }
+        }
+
+        let mut beyond_front = false;
+        let mut front_zeros = 0;
+
+        for (i, &c) in digits.iter().enumerate() {
+            if c == 0 {
+                str_digits[i] = 62;
+                if !beyond_front {
+                    front_zeros += 1;
+                }
+            } else {
+                str_digits[i] = (c + 52) as usize;
+                beyond_front = true;
+                //
+                // if str_digits[i] > 62 || str_digits[i] < 52 {
+                //     str_digits[i] = 64
+                // }
+            }
+        }
+
+        if front_zeros == 5 {
+            front_zeros = 4
+        }
+
+        self.draw_string(console, x, y, &str_digits[front_zeros..])
+    }
 }
 
 fn string_draw_helper(sprite: sprite::Sprite, x: u8, y: u8, is_first: bool, console: &mut Console) {
     if !is_first {
         while console.blitter_registers.start.read() == 1 {}
-    } else {
-        console.control_registers.set_dma_enable(true);
-
-        console.control_registers.set_colorfill_mode(false);
-        console.control_registers.set_vram_bank(sprite.bank.bank);
-        console.control_registers.set_dma_gcarry(true);
     }
+    console.control_registers.set_dma_enable(true);
+
+    console.control_registers.set_colorfill_mode(false);
+    console.control_registers.set_vram_bank(sprite.bank.bank);
+    console.control_registers.set_dma_gcarry(true);
 
     console.blitter_registers.vram_x.write(sprite.vram_x);
     console.blitter_registers.vram_y.write(sprite.vram_y);

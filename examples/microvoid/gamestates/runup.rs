@@ -16,8 +16,9 @@ use crate::system::position::FancyPosition;
 pub struct Runup {
     pub minifont: FontHandle, // TODO: maybe abstract the fields/fns common between start_menu and playing
     pub position: FancyPosition, // range of -128..255 as a "3 pane" recycled view
-    pub(crate) grass: Grass,
+    pub grass: Grass,
     pub gamer: Gamer,
+    pub timer: u16,
 }
 
 impl Runup {
@@ -29,6 +30,7 @@ impl Runup {
                 array: start_menu.grass.array,
             },
             gamer: Gamer::init(console, 1, SpriteRamQuadrant::One),
+            timer: 0,
         }
     }
 }
@@ -47,14 +49,16 @@ impl GameState for Runup {
             self.gamer.holding_jump = true;
             // temporarily reduce gravity, for aesthetic reasons
             self.gamer.velocity -= FixedI16::<U8>::from_num(0.015);
-        } else {
+        } else if self.timer >= 180 { // wait 2 seconds
             self.minifont.draw_string(console, 64, 72, &string_to_indices!("hold A to jump"));
             if console.gamepad_1.is_pressed(Buttons::A) {
                 return GameStates::Playing(Playing::init(self))
             }
         }
 
-
+        if self.timer < 20000 {
+            self.timer += 1;
+        }
 
         self.position.x += 1;
 

@@ -10,18 +10,18 @@ macro_rules! impl_div_mod {
             let mut result: $t = 0;
             let mut divisor: $t = b;
 
-            while divisor <= a {
+            // Increase divisor without causing overflow
+            while divisor <= a && divisor <= (<$t>::MAX / 2) {
                 divisor <<= 1;
             }
 
-            while divisor > b {
-                divisor >>= 1;
-
-                result <<= 1; // Shift result to the left to make room for the next bit
+            while divisor >= b {
+                result <<= 1;
                 if a >= divisor {
                     a -= divisor;
-                    result |= 1; // Set the least significant bit
+                    result |= 1;
                 }
+                divisor >>= 1;
             }
 
             result
@@ -35,13 +35,13 @@ macro_rules! impl_div_mod {
 
             let mut divisor: $t = b;
 
-            while divisor <= a {
+            // Prevent overflow when scaling up divisor
+            while divisor <= a && divisor <= (<$t>::MAX / 2) {
                 divisor <<= 1;
             }
 
             while divisor > b {
                 divisor >>= 1;
-
                 if a >= divisor {
                     a -= divisor;
                 }
