@@ -1,5 +1,14 @@
 use derive_more::{Add, AddAssign, Sub, SubAssign};
+use fixed::{FixedI16, FixedU16};
 use fixed::types::extra::U8;
+
+pub fn f16u8_to_u8(f: FixedI16<U8>) -> u8 {
+    (f.to_bits() >> 8) as u8 & 0b0111111
+}
+
+pub fn fu16u8_to_u8(f: FixedU16<U8>) -> u8 {
+    (f.to_bits() >> 8) as u8 & 0b1111111
+}
 
 #[derive(Debug, Copy, Clone, Add, AddAssign, Sub, SubAssign)]
 pub struct ScreenSpacePosition {
@@ -22,6 +31,7 @@ pub struct SubpixelFancyPosition {
     pub y: fixed::FixedU16<U8>, // the position in "worldspace", -64 to 192
 }
 
+// TODO: this is really more of "super-screen space". We might want a true world space.
 #[derive(Debug, Copy, Clone, Add, AddAssign, Sub, SubAssign)]
 pub struct FancyPosition {
     pub x: u8, // the position in "worldspace", -64 to 192

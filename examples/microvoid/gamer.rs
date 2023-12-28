@@ -1,3 +1,4 @@
+use core::ops::Div;
 use fixed::{FixedI16, FixedU16};
 use fixed::types::extra::U8;
 use crate::gamer::GamerStates::{Falling, Jumping, Running, Sliding, Standing};
@@ -13,7 +14,7 @@ dgtf_macros::include_spritesheet!(GAMER_SPRITES, "examples/microvoid/assets/game
 
 pub const FRAME_TIMES: [u8; 12] =   [0,  5,  5,  5,  5,  5,  5,  5,  4,  0,  0,  0]; // this was 3x what it should be at 60fps???
 pub const X_OFFSET: [u8; 12] =      [2,  0,  1,  2,  2,  0,  2,  2,  2,  2,  2,  6];
-pub const Y_OFFSET: [u8; 12] =      [0,  0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0];
+pub const Y_OFFSET: [u8; 12] =      [0,  0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  2];
 
 
 
@@ -113,23 +114,25 @@ impl Gamer {
     }
 
     pub fn sim_air_physics(&mut self) {
-        self.acceleration = FixedI16::<U8>::from_num(0.1725);
+        self.acceleration = FixedI16::<U8>::from_num(0.1725*2.5);
 
         if self.holding_jump {
-            self.acceleration = FixedI16::<U8>::from_num(0.0575);
+            self.acceleration = FixedI16::<U8>::from_num(0.0575*3.0);
 
-            if self.state == Jumping && self.no_jump < 15{
+
+            // TODO: it feels like this is getting optimized to always be on if you make it past jumping.
+            if self.state == Jumping && self.no_jump < 7 {
                 if self.no_jump < 10 {
                     self.no_jump += 1;
-                    self.acceleration = FixedI16::<U8>::from_num(0.0325);
+                    self.acceleration = FixedI16::<U8>::from_num(0.0325*3.0);
                 }
             }
         }
 
         self.velocity += self.acceleration;
 
-        if self.velocity > FixedI16::<U8>::from_num(2.5) {
-            self.velocity = FixedI16::<U8>::from_num(2.5);
+        if self.velocity > FixedI16::<U8>::from_num(2.5*2.0) {
+            self.velocity = FixedI16::<U8>::from_num(2.5*2.0);
         }
 
         self.subpixel_pos.y = self.subpixel_pos.y.add_signed(self.velocity);
@@ -139,17 +142,17 @@ impl Gamer {
             self.velocity = FixedI16::<U8>::from(0);
             self.acceleration = FixedI16::<U8>::from(0);
             self.set_state(Running);
-            self.no_jump = 10;
+            self.no_jump = 0; // no_jump frames are CANCELLED
         }
     }
 
-    pub fn update_and_draw(&mut self, console: &mut Console) {
+    pub fn update_and_draw(&mut self, velocity_x: FixedI16<U8>, console: &mut Console) {
         match self.state {
             Running => {
                 if self.no_jump == 0 && console.gamepad_1.is_pressed(Buttons::A) {
                     self.holding_jump = true;
                     self.set_state(Jumping);
-                    self.velocity = FixedI16::<U8>::from_num(-1.75);
+                    self.velocity = FixedI16::<U8>::from_num(-1.75*1.75);
                     self.no_jump = 1;
                 }
 
@@ -170,7 +173,6 @@ impl Gamer {
             }
             Falling  => {
                 self.sim_air_physics();
-                /* not implemented */
             }
             _ => { /* not implemented */ }
         }
@@ -191,10 +193,14 @@ impl Gamer {
         };
 
         // origin is bottom-left ish
-        let animation_offsets = FancyPosition {
+        let mut animation_offsets = FancyPosition {
             x: X_OFFSET[self.animation],
             y: Y_OFFSET[self.animation] + sprite.height,
         };
+
+        if self.animation == Sliding.to_animation_idx() {
+            animation_offsets.y -= 4;
+        }
 
         let position = self.subpixel_pos.to_fancy() - animation_offsets;
 
@@ -203,7 +209,8 @@ impl Gamer {
         self.frame_counter += 1;
 
         // TODO: this could _probably_ be improved, right?
-        if self.frame_counter > FRAME_TIMES[self.animation] {
+
+        if self.frame_counter > (FixedU16::<U8>::from_num(FRAME_TIMES[self.animation]).div(velocity_x.unsigned_abs())).to_num::<u8>() {
             self.frame_counter = 0;
             match self.animation {
                 1..=7 => self.animation += 1,
@@ -217,11 +224,12 @@ impl Gamer {
         let height = self.spritesheet.sprite_data[self.animation].height;
         let mut rect_xy = self.subpixel_pos.to_fancy();
         rect_xy.y -= height - 1 + Y_OFFSET[self.animation];
+        rect_xy.x +=1;
 
         Rectangle {
             xy: rect_xy,
             size: FancyPosition {
-                x: 7,
+                x: 6,
                 y: 8,
             }
         }

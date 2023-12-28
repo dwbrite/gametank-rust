@@ -3,7 +3,7 @@ use crate::system::position::FancyPosition;
 use crate::system::sprite::{Sprite, VramBank};
 
 pub fn draw_background(console: &mut Console, redraw_ground: bool) {
-    console.draw_box(0, 0, 127, 100, 0b101_00_000, false);
+    console.draw_box(0, 0, 127, 100, 0b101_00_000, true);
     console.draw_box(127, 0, 1, 100, 0b101_00_000, false);
 
     if redraw_ground {

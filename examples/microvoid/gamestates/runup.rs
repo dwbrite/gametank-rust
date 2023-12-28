@@ -11,14 +11,15 @@ use crate::gamestates::start_menu::{StartMenu};
 use crate::system::inputs::Buttons;
 
 use crate::gamer::*;
-use crate::system::position::FancyPosition;
+use crate::system::position::{f16u8_to_u8, FancyPosition, SubpixelFancyPosition};
 
 pub struct Runup {
     pub minifont: FontHandle, // TODO: maybe abstract the fields/fns common between start_menu and playing
-    pub position: FancyPosition, // range of -128..255 as a "3 pane" recycled view
+    pub position: SubpixelFancyPosition, // range of -128..255 as a "3 pane" recycled view
     pub grass: Grass,
     pub gamer: Gamer,
     pub timer: u16,
+    pub velocity: FixedI16<U8>,
 }
 
 impl Runup {
@@ -31,6 +32,7 @@ impl Runup {
             },
             gamer: Gamer::init(console, 1, SpriteRamQuadrant::One),
             timer: 0,
+            velocity: start_menu.velocity,
         }
     }
 }
@@ -40,10 +42,10 @@ impl GameState for Runup {
     fn update_and_draw(mut self, _ticks: u64, console: &mut Console) -> GameStates {
         let is_running = self.gamer.state == GamerStates::Running;
 
-        draw_background(console, false);
-        draw_clouds(&self.position, console);
-        self.grass.draw_grass(self.position, console);
-        self.gamer.update_and_draw(console);
+        draw_background(console, true); // this brings us down to 30fps lol
+        draw_clouds(&self.position.to_fancy(), console);
+        self.grass.draw_grass(self.position.to_fancy(), console);
+        self.gamer.update_and_draw(self.velocity, console);
 
         if !is_running {
             self.gamer.holding_jump = true;
@@ -61,7 +63,7 @@ impl GameState for Runup {
         }
 
         // allow overflow
-        self.position.x += 1;
+        self.position.x = self.position.x.add_signed(self.velocity);
 
         GameStates::Runup(self)
     }

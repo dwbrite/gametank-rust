@@ -84,15 +84,27 @@ impl FontHandle {
         console.blitter_registers.reset_irq();
     }
 
+    pub fn digit_to_char(c: u8) -> usize {
+
+        if c == 0 {
+            62
+        } else {
+            (c + 52) as usize
+        }
+    }
+
     // max 65535_00
     pub fn draw_number(&self, console: &mut Console, x: u8, y: u8, number: u16, silly_digits: u8) {
         let mut remainder = number;
         let mut digits = [0; 7];
-        let mut str_digits = [0usize; 7];
+        let mut w = 0;
+        let mut is_first = true;
 
-        for (i, &n) in [10000, 1000, 100, 10, 1].iter().enumerate() {
-            if remainder == 0 {
-                break;
+        let mut beyond_front = false;
+
+        for (i, &n) in [10000, 1000, 100, 10, 1, 10, 1].iter().enumerate() {
+            if i >= 5 {
+                remainder = silly_digits as u16;
             }
 
             if n == 1 {
@@ -101,39 +113,42 @@ impl FontHandle {
                 digits[i] = remainder / n;
             }
             remainder -= digits[i] * n;
-        }
 
-        let mut smol_remainder = silly_digits;
-        if smol_remainder != 0 {
-            digits[5] = (smol_remainder / 10) as u16;
-            smol_remainder -= (digits[5] * 10) as u8;
-        }
-        digits[6] = (smol_remainder % 10) as u16;
+            let char = Self::digit_to_char(digits[i] as u8);
 
-        let mut beyond_front = false;
-        let mut front_zeros = 0;
+            let c = sprite::Sprite {
+                bank: VramBank {
+                    bank: self.bank,
+                    quadrant: self.quadrant,
+                },
+                vram_x: self.spritesheet.sprite_data[char].sheet_x,
+                vram_y: 40 + self.spritesheet.sprite_data[char].sheet_y,
+                width: self.spritesheet.sprite_data[char].width,
+                height: self.spritesheet.sprite_data[char].height,
+                is_tile: false,
+                with_interrupt: false,
+            };
+            let x_offset = self.spritesheet.sprite_data[char].x_offset;
+            let y_offset = self.spritesheet.sprite_data[char].y_offset;
+            let x = w + x + x_offset;
+            let y = y + y_offset;
 
-        for (i, &c) in digits.iter().enumerate() {
-            if c == 0 {
-                str_digits[i] = 62;
-                if !beyond_front {
-                    front_zeros += 1;
-                }
-            } else {
-                str_digits[i] = (c + 52) as usize;
+            if char != 62 {
                 beyond_front = true;
-
-                if str_digits[i] > 62 || str_digits[i] < 52 {
-                    str_digits[i] = 64
-                }
+            } else if !beyond_front && i < 6 {
+                // if char is '0'
+                // and we haven't printed another character
+                // and we're not at the end
+                continue
             }
-        }
 
-        if front_zeros == 7 {
-            front_zeros = 6
-        }
+            w += c.width + x_offset;
 
-        self.draw_string(console, x, y, &str_digits[front_zeros..])
+            string_draw_helper(c, x, y, is_first, console);
+            is_first = false;
+        }
+        unsafe { wait(); }
+        console.blitter_registers.reset_irq();
     }
 }
 
