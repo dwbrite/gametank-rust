@@ -1,20 +1,16 @@
 use fixed::{FixedI16, FixedU16};
 use fixed::types::extra::U8;
 use crate::gamer::GamerStates::{Falling, Jumping, Running, Sliding, Standing};
-use crate::system::{console, sprite};
+use crate::system::{sprite};
 use crate::system::console::{BlitMode, Console, SpriteRamQuadrant};
 use crate::system::inputs::Buttons;
-use crate::system::position::{FancyPosition, ScreenSpacePosition, SubpixelFancyPosition};
+use crate::system::position::{FancyPosition, SubpixelFancyPosition};
+use crate::system::rectangle::Rectangle;
 use crate::system::sprite::VramBank;
 
 // creates a Sprite and SpriteSheet struct in this module, as well as a static SpriteSheet GAMER_SPRITES
 dgtf_macros::include_spritesheet!(GAMER_SPRITES, "examples/microvoid/assets/gamer_con_polvo.bmp", "examples/microvoid/assets/gamer_con_polvo.json");
-//
-// pub const STANDING: usize = 0;
-// pub const RUNNING: usize = 1;
-// pub const JUMPING: usize = 9;
-// pub const FALLING: usize = 10;
-// pub const SLIDING: usize = 11;
+
 pub const FRAME_TIMES: [u8; 12] =   [0,  5,  5,  5,  5,  5,  5,  5,  4,  0,  0,  0]; // this was 3x what it should be at 60fps???
 pub const X_OFFSET: [u8; 12] =      [2,  0,  1,  2,  2,  0,  2,  2,  2,  2,  2,  6];
 pub const Y_OFFSET: [u8; 12] =      [0,  0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0];
@@ -54,13 +50,13 @@ pub struct Gamer {
     pub holding_jump: bool,
     pub velocity: FixedI16<U8>,
     pub acceleration: FixedI16<U8>,
-    pub no_jump: u8,
+    pub no_jump: u8, // reused for jump timing
 }
 
 impl Gamer {
     pub fn init(console: &mut Console, bank: u8, quadrant: SpriteRamQuadrant) -> Self {
         let sprite_sheet = &GAMER_SPRITES;
-        let mut vram = console.access_vram_bank(bank, &quadrant);
+        let vram = console.access_vram_bank(bank, &quadrant);
 
         let bits_per_pixel = 8 / sprite_sheet.pixels_per_byte as usize;
         let mask = (1 << bits_per_pixel) - 1;
@@ -117,26 +113,28 @@ impl Gamer {
     }
 
     pub fn sim_air_physics(&mut self) {
-        self.acceleration = FixedI16::<U8>::from_num(0.0825);
+        self.acceleration = FixedI16::<U8>::from_num(0.1725);
 
         if self.holding_jump {
-            if self.state == Jumping {
-                self.acceleration = FixedI16::<U8>::from_num(0.0350);
-            } else {
-                self.acceleration = FixedI16::<U8>::from_num(0.0425);
+            self.acceleration = FixedI16::<U8>::from_num(0.0575);
+
+            if self.state == Jumping && self.no_jump < 15{
+                if self.no_jump < 10 {
+                    self.no_jump += 1;
+                    self.acceleration = FixedI16::<U8>::from_num(0.0325);
+                }
             }
         }
 
         self.velocity += self.acceleration;
 
         if self.velocity > FixedI16::<U8>::from_num(2.5) {
-            self.acceleration = FixedI16::<U8>::from_num(0.025);
             self.velocity = FixedI16::<U8>::from_num(2.5);
         }
 
         self.subpixel_pos.y = self.subpixel_pos.y.add_signed(self.velocity);
 
-        if self.subpixel_pos.to_fancy_position().y > 100+64 {
+        if self.subpixel_pos.to_fancy().y > 100+64 {
             self.subpixel_pos.y = FixedU16::<U8>::from(64+100);
             self.velocity = FixedI16::<U8>::from(0);
             self.acceleration = FixedI16::<U8>::from(0);
@@ -145,13 +143,14 @@ impl Gamer {
         }
     }
 
-    pub fn update_and_draw(&mut self, mut console: &mut Console) {
+    pub fn update_and_draw(&mut self, console: &mut Console) {
         match self.state {
             Running => {
                 if self.no_jump == 0 && console.gamepad_1.is_pressed(Buttons::A) {
                     self.holding_jump = true;
                     self.set_state(Jumping);
                     self.velocity = FixedI16::<U8>::from_num(-1.75);
+                    self.no_jump = 1;
                 }
 
                 if self.no_jump > 0 {
@@ -187,6 +186,8 @@ impl Gamer {
             vram_y: sprite_data.sheet_y + 40,
             width: sprite_data.width,
             height: sprite_data.height,
+            is_tile: false,
+            with_interrupt: false,
         };
 
         // origin is bottom-left ish
@@ -195,7 +196,7 @@ impl Gamer {
             y: Y_OFFSET[self.animation] + sprite.height,
         };
 
-        let position = self.subpixel_pos.to_fancy_position() - animation_offsets;
+        let position = self.subpixel_pos.to_fancy() - animation_offsets;
 
         sprite.draw_sprite_with_overscan(position, BlitMode::Normal, console);
 
@@ -208,6 +209,20 @@ impl Gamer {
                 1..=7 => self.animation += 1,
                 8 => self.animation = 1,
                 _ => {}
+            }
+        }
+    }
+
+    pub fn to_rectangle(&self) -> Rectangle {
+        let height = self.spritesheet.sprite_data[self.animation].height;
+        let mut rect_xy = self.subpixel_pos.to_fancy();
+        rect_xy.y -= height - 1 + Y_OFFSET[self.animation];
+
+        Rectangle {
+            xy: rect_xy,
+            size: FancyPosition {
+                x: 7,
+                y: 8,
             }
         }
     }

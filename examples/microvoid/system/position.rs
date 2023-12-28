@@ -7,6 +7,15 @@ pub struct ScreenSpacePosition {
     pub y: u8,
 }
 
+impl ScreenSpacePosition {
+    pub fn to_fancy(&self) -> FancyPosition {
+        FancyPosition {
+            x: self.x + 64,
+            y: self.y + 64,
+        }
+    }
+}
+
 #[derive(Debug, Copy, Clone)]
 pub struct SubpixelFancyPosition {
     pub x: fixed::FixedU16<U8>, // the position in "worldspace", -64 to 192
@@ -36,7 +45,7 @@ pub struct Dimensions {
 
 impl SubpixelFancyPosition {
     #[inline]
-    pub fn to_fancy_position(&self) -> FancyPosition {
+    pub fn to_fancy(&self) -> FancyPosition {
         FancyPosition {
             x: (self.x.round().to_bits() >> 8) as u8,
             y: (self.y.round().to_bits() >> 8) as u8,
@@ -45,6 +54,6 @@ impl SubpixelFancyPosition {
 
     #[inline]
     pub fn to_screenspace(&self) -> ScreenSpacePosition {
-        self.to_fancy_position().to_screenspace()
+        self.to_fancy().to_screenspace()
     }
 }

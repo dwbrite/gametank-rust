@@ -3,18 +3,11 @@ extern crate proc_macro;
 use proc_macro::TokenStream;
 
 use quote::quote;
-use std::fs;
 
-
-
-use colors_transform::*;
 use serde::{Deserialize, Serialize};
-use syn::{parse_macro_input, LitStr, Token};
-use syn::parse::Parser;
+use syn::{parse_macro_input, LitStr};
 
 use proc_macro2::TokenStream as TokenStream2;
-use std::path::PathBuf;
-use std::env;
 
 
 mod bmp;
@@ -23,7 +16,8 @@ mod bmp;
 #[derive(Serialize, Deserialize, Debug)]
 struct Frame {
     frame: FrameFrame,
-    spriteSourceSize: FrameFrame,
+    #[serde(rename = "spriteSourceSize")]
+    sprite_source_size: FrameFrame,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -137,8 +131,8 @@ pub fn include_spritesheet(input: TokenStream) -> TokenStream {
             sheet_y: frame.frame.y,
             width: frame.frame.w,
             height: frame.frame.h,
-            x_offset: frame.spriteSourceSize.x,
-            y_offset: frame.spriteSourceSize.y,
+            x_offset: frame.sprite_source_size.x,
+            y_offset: frame.sprite_source_size.y,
         });
     }
 

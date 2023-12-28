@@ -1,3 +1,5 @@
+# the commented out pieces are so my IDE can understand the code without me needing to compile rust-mos on my system :^)
+
 [build]
 #target = "mos-unknown-none"
 

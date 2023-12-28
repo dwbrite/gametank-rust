@@ -8,7 +8,6 @@ use std::fs;
 use tinybmp;
 use tinybmp::ColorTable;
 use embedded_graphics::{pixelcolor::Rgb888};
-use colors_transform::*;
 
 
 

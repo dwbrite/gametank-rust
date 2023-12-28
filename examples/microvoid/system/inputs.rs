@@ -1,11 +1,7 @@
 use bit_field::BitField;
 use volatile::Volatile;
 use dgtf_macros::string_to_indices;
-use crate::system::bcr::Bcr;
-use crate::system::console::Console;
-//
-// static GAMEPAD1: &'static Volatile<u8> = unsafe {&mut *(0x2008 as *mut Volatile<u8>)};
-// static GAMEPAD2: &'static Volatile<u8> = unsafe {&mut *(0x2009 as *mut Volatile<u8>)};
+
 
 pub fn gpr1() -> &'static mut Volatile<u8> {
     unsafe { &mut *(0x2008 as *mut Volatile<u8>) }
@@ -15,20 +11,6 @@ pub fn gpr2() -> &'static mut Volatile<u8> {
     unsafe { &mut *(0x2009 as *mut Volatile<u8>) }
 }
 
-
-// #define INPUT_MASK_C		8192    0b0010_0000_0000_0000
-// #define INPUT_MASK_B		4096    0b0001_0000_0000_0000
-// #define INPUT_MASK_UP	2056    0b0000_1000_0000_0000
-// #define INPUT_MASK_DOWN	1028    0b0000_0100_0000_0000
-// #define INPUT_MASK_LEFT  512     0b0000_0010_0000_0000
-// #define INPUT_MASK_RIGHT	256     0b0000_0001_0000_0000
-// #define INPUT_MASK_START	32      0b0000_0000_0010_0000
-// #define INPUT_MASK_A		16      0b0000_0000_0001_0000
-// #define INPUT_MASK_ALL_KEYS INPUT_MASK_UP|INPUT_MASK_DOWN|INPUT_MASK_LEFT|INPUT_MASK_RIGHT|INPUT_MASK_A|INPUT_MASK_B|INPUT_MASK_C|INPUT_MASK_START
-
-
-
-// new order: start, a, c, b, up, down, left, right
 
 
 #[derive(Debug, Copy, Clone)]

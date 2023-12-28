@@ -9,6 +9,7 @@ mod gamestates;
 mod stuff;
 mod aesthetic;
 mod gamer;
+mod bad_dudes;
 
 use crate::gamestates::{GameState, GameStates};
 use crate::gamestates::start_menu::StartMenu;

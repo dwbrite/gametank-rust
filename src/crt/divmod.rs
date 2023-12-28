@@ -40,11 +40,11 @@ macro_rules! impl_div_mod {
                 divisor <<= 1;
             }
 
-            while divisor > b {
-                divisor >>= 1;
-                if a >= divisor {
-                    a -= divisor;
-                }
+            while a >= b {
+                a = match a.checked_sub(b) {
+                    Some(new_a) => new_a,
+                    None => break, // Break in case of underflow, though unlikely in this context
+                };
             }
 
             a

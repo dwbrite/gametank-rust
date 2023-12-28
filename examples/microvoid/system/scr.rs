@@ -1,6 +1,5 @@
 use volatile::Volatile;
 use bit_field::BitField;
-use crate::system::console::SpriteRamQuadrant;
 
 pub enum DmaLocation {
     Vram,

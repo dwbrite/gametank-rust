@@ -12,6 +12,8 @@ pub struct Sprite {
     pub vram_y: u8,
     pub width: u8,
     pub height: u8,
+    pub is_tile: bool,
+    pub with_interrupt: bool,
 }
 
 
@@ -39,7 +41,7 @@ impl Sprite {
 
         console.control_registers.set_colorfill_mode(false);
         console.control_registers.set_vram_bank(self.bank.bank);
-        console.control_registers.set_dma_gcarry(true);
+        console.control_registers.set_dma_gcarry(!self.is_tile);
 
         console.blitter_registers.vram_x.write(vram_position.x);
         console.blitter_registers.vram_y.write(vram_position.y);
@@ -50,8 +52,12 @@ impl Sprite {
         console.blitter_registers.start.write(1);
 
 
-        unsafe { gt_crust::boot::wait(); }
-        console.blitter_registers.reset_irq();
+        if self.with_interrupt {
+            unsafe { gt_crust::boot::wait(); }
+            console.blitter_registers.reset_irq();
+        } else {
+            while console.blitter_registers.start.read() == 1 {}
+        }
     }
 
     // TODO: add function to draw sprite without waiting, for optimization - maybe add private "inline always" version for code-reuse
@@ -80,6 +86,8 @@ impl Sprite {
 
         self.send_blit(&fb_position, &vram_position, &dimensions, console)
     }
+
+
 
     pub fn draw_sprite_with_overscan(&self, position: FancyPosition, blit_mode: BlitMode, console: &mut Console) {
         let mut dimensions = Dimensions {

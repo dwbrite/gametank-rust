@@ -1,5 +1,5 @@
 use gt_crust::boot::wait;
-use crate::system::console::{BlitMode, Console, SpriteRamQuadrant};
+use crate::system::console::{Console, SpriteRamQuadrant};
 use crate::system::position::{Dimensions, FancyPosition, ScreenSpacePosition};
 use crate::system::sprite::{Sprite, VramBank};
 
@@ -20,9 +20,11 @@ impl Grass {
             vram_y: sprite_data.sheet_y + 40,
             width: sprite_data.width,
             height: sprite_data.height,
+            is_tile: false,
+            with_interrupt: false,
         };
 
-        position.y = 101+64 - sprite.height;
+        position.y = 101+64 - sprite.height; // draw right above floor (100)
 
         let mut dimensions = Dimensions {
             width: sprite.width,

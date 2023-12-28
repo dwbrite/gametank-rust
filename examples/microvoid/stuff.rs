@@ -2,10 +2,10 @@ use crate::system::console::{Console, SpriteRamQuadrant};
 dgtf_macros::include_spritesheet!(ASSORTED_SPRITES, "examples/microvoid/assets/other_stuff.bmp", "examples/microvoid/assets/other_stuff.json");
 
 
-pub fn load_assorted_sprites(mut console: &mut Console) {
+pub fn load_assorted_sprites(console: &mut Console) {
     let sprite_sheet = &ASSORTED_SPRITES;
 
-    let mut vram = console.access_vram_bank(0, &SpriteRamQuadrant::Two);
+    let vram = console.access_vram_bank(0, &SpriteRamQuadrant::Two);
 
     let bits_per_pixel = 8 / sprite_sheet.pixels_per_byte as usize;
     let mask = (1 << bits_per_pixel) - 1;

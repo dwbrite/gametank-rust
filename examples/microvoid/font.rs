@@ -1,5 +1,5 @@
 use gt_crust::boot::wait;
-use crate::system::console::{BlitMode, Console, SpriteRamQuadrant};
+use crate::system::console::{Console, SpriteRamQuadrant};
 use crate::system::sprite;
 use crate::system::sprite::VramBank;
 
@@ -16,7 +16,7 @@ impl FontHandle {
     pub fn init(console: &mut Console, bank: u8, quadrant: SpriteRamQuadrant) -> FontHandle {
         let sprite_sheet = &MINIFONT_SPRITES;
 
-        let mut vram = console.access_vram_bank(bank, &quadrant);
+        let vram = console.access_vram_bank(bank, &quadrant);
 
         let bits_per_pixel = 8 / sprite_sheet.pixels_per_byte as usize;
         let mask = (1 << bits_per_pixel) - 1;
@@ -63,6 +63,8 @@ impl FontHandle {
                 vram_y: 40 + self.spritesheet.sprite_data[*char].sheet_y,
                 width: self.spritesheet.sprite_data[*char].width,
                 height: self.spritesheet.sprite_data[*char].height,
+                is_tile: false,
+                with_interrupt: false,
             };
             let x_offset = self.spritesheet.sprite_data[*char].x_offset;
             let y_offset = self.spritesheet.sprite_data[*char].y_offset;
@@ -82,7 +84,7 @@ impl FontHandle {
         console.blitter_registers.reset_irq();
     }
 
-    // max 65535
+    // max 65535_00
     pub fn draw_number(&self, console: &mut Console, x: u8, y: u8, number: u16, silly_digits: u8) {
         let mut remainder = number;
         let mut digits = [0; 7];
@@ -127,8 +129,8 @@ impl FontHandle {
             }
         }
 
-        if front_zeros == 5 {
-            front_zeros = 4
+        if front_zeros == 7 {
+            front_zeros = 6
         }
 
         self.draw_string(console, x, y, &str_digits[front_zeros..])
