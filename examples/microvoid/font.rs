@@ -83,23 +83,30 @@ impl FontHandle {
     }
 
     // max 65535
-    pub fn draw_number(&self, console: &mut Console, x: u8, y: u8, number: u16) {
+    pub fn draw_number(&self, console: &mut Console, x: u8, y: u8, number: u16, silly_digits: u8) {
         let mut remainder = number;
-        let mut digits = [0; 5];
-        let mut str_digits = [0usize; 5];
+        let mut digits = [0; 7];
+        let mut str_digits = [0usize; 7];
 
         for (i, &n) in [10000, 1000, 100, 10, 1].iter().enumerate() {
+            if remainder == 0 {
+                break;
+            }
+
             if n == 1 {
                 digits[i] = remainder % 10;
             } else {
                 digits[i] = remainder / n;
             }
             remainder -= digits[i] * n;
-
-            if remainder == 0 {
-                break;
-            }
         }
+
+        let mut smol_remainder = silly_digits;
+        if smol_remainder != 0 {
+            digits[5] = (smol_remainder / 10) as u16;
+            smol_remainder -= (digits[5] * 10) as u8;
+        }
+        digits[6] = (smol_remainder % 10) as u16;
 
         let mut beyond_front = false;
         let mut front_zeros = 0;
@@ -113,10 +120,10 @@ impl FontHandle {
             } else {
                 str_digits[i] = (c + 52) as usize;
                 beyond_front = true;
-                //
-                // if str_digits[i] > 62 || str_digits[i] < 52 {
-                //     str_digits[i] = 64
-                // }
+
+                if str_digits[i] > 62 || str_digits[i] < 52 {
+                    str_digits[i] = 64
+                }
             }
         }
 

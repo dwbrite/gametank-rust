@@ -17,7 +17,7 @@ pub struct Playing {
     gamer: Gamer,
     grass: Grass,
     score: u16,
-    bepis: u16,
+    silly_digits: u8,
 }
 
 impl Playing {
@@ -28,7 +28,7 @@ impl Playing {
             score: 36000,
             grass: runup.grass,
             gamer: runup.gamer,
-            bepis: 39000,
+            silly_digits: 0,
         }
     }
 }
@@ -41,10 +41,13 @@ impl GameState for Playing {
         self.grass.draw_grass(self.position, console);
         self.gamer.update_and_draw(console);
 
-        self.minifont.draw_number(console, 0, 0, self.score);
+        self.minifont.draw_number(console, 0, 0, self.score, self.silly_digits);
 
-        if ticks % 2 == 0 {
+        self.silly_digits += 1;
+
+        if self.silly_digits >= 100 {
             self.score += 8;
+            self.silly_digits -= 100;
         }
 
         self.position.x += 1;
