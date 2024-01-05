@@ -64,3 +64,14 @@ the [programming manual](https://gametank.zone/manual/),
 as well as some examples/games in C and assembly on 
 [Clyde's github](https://github.com/clydeshaffer).
 For example: [Accursed Fiend](https://github.com/clydeshaffer/fiend)
+
+## Rust Examples
+
+The best example right now is examples/microvoid, programmed in two weeks for the first ever [GameTank Game Jam](https://itch.io/jam/gametank-game-jam/rate/2444529). It implements much of what _should_ be refactored into the SDK. 
+
+https://github.com/dwbrite/gametank-rust/assets/5528368/70243be7-8cc6-42de-b752-baaa24c3a65e
+
+It's got some issues that have yet to be debugged, and in its current state only works on the desktop emulator or in the emulator on [clyde's website](https://clydeshaffer.com/builds/GameTankEmulator/wasm/), after a hard reset.
+I think the issue has something to do with llvm thinking the stack is initialized when it's not. I may have to clear the reserved registers in asm before __boot() 🤔
+
+It's also programmed against a theoretical 32K cartridge, whereas most physical cartridges use 2MB flash, which needs to be banked on first use.
