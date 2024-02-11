@@ -14,8 +14,8 @@ macro_rules! impl_mul {
         }
     };
 }
-
-impl_mul!(u8,  __mulqi3);
+//
+// impl_mul!(u8,  __mulqi3);
 impl_mul!(u16, __mulhi3);
 impl_mul!(u32, __mulsi3);
-impl_mul!(u64, __muldi3);
+// impl_mul!(u64, __muldi3);

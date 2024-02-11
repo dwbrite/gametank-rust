@@ -15,9 +15,18 @@ fn panic(_panic: &PanicInfo<'_>) -> ! {
 }
 
 #[no_mangle]
+#[link_section = ".text.fixed"]
 extern "C" fn __boot() {
     unsafe {
-        init();
+        __rc0 = 0xFF;
+        __rc1 = 0x1F;
+
+        let bank_reg: *mut u8 = 0x2005 as *mut u8;
+        ptr::write_volatile(bank_reg, 0);
+
+
+
+        // init();
         main();
     }
     core::panic!("Came out of main");
@@ -41,6 +50,7 @@ extern "C" {
 
 #[cfg(not(feature = "manual_init"))]
 #[no_mangle]
+#[link_section = ".text.fixed"]
 fn init() { // this is __do_init_stack
     unsafe {
         let bank_reg: *mut u8 = 0x2005 as *mut u8;
@@ -52,11 +62,9 @@ fn init() { // this is __do_init_stack
 }
 
 #[no_mangle]
+#[link_section = ".text.fixed"]
 fn __do_init_stack() {
     unsafe {
-        let bank_reg: *mut u8 = 0x2005 as *mut u8;
-        ptr::write_volatile(bank_reg, 0);
-
         __rc0 = 0xFF;
         __rc1 = 0x1F;
     }

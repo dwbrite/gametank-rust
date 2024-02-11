@@ -5,6 +5,7 @@ use crate::system::vram::VramDma;
 use wyhash;
 use wyhash::wyrng;
 use crate::system::inputs::{GamePadPort, GameshockOne};
+use crate::system::via::Via;
 
 #[derive(Debug, Copy, Clone)]
 pub enum SpriteRamQuadrant {
@@ -27,6 +28,7 @@ pub enum BlitMode {
 pub struct Console {
     pub(crate) control_registers: MirroredScr,
     pub(crate) blitter_registers: &'static mut Bcr,
+    pub via: &'static mut Via,
     vram: VramDma,
     pub gamepad_1: GameshockOne,
     pub gamepad_2: GameshockOne,
@@ -37,15 +39,18 @@ pub struct Console {
 }
 
 impl Console {
+    #[link_section = ".text.fixed"]
     pub fn init() -> Console {
         let mut scr: MirroredScr = unsafe { MirroredScr::new() };
         let bcr:&mut Bcr = unsafe { Bcr::new() };
+        let via = unsafe { Via::new() };
 
         scr.enable_vblank_nmi(true);
 
         Console {
             control_registers: scr,
             blitter_registers: bcr,
+            via,
             vram: VramDma::new(),
             gamepad_1: GameshockOne::init(GamePadPort::One),
             gamepad_2: GameshockOne::init(GamePadPort::Two),

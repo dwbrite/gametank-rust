@@ -189,7 +189,6 @@ impl Gamer {
             width: sprite_data.width,
             height: sprite_data.height,
             is_tile: false,
-            with_interrupt: false,
         };
 
         // origin is bottom-left ish

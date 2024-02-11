@@ -48,6 +48,7 @@ impl MirroredScr {
         self.scr.banking.write(self.mirror.banking.read());
     }
 
+    #[link_section = ".text.fixed"]
     pub unsafe fn new() -> MirroredScr {
         let s = MirroredScr {
             scr: &mut *(0x2000 as *mut Scr),

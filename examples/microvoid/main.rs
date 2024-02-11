@@ -17,8 +17,10 @@ use crate::stuff::load_assorted_sprites;
 use crate::system::console::*;
 
 #[no_mangle]
+#[link_section = ".text.fixed"]
 fn main() {
     let mut console = Console::init();
+    console.via.change_rom_bank(254);
     load_assorted_sprites(&mut console);
 
     let mut ticks = 0u64;

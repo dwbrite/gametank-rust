@@ -13,7 +13,6 @@ pub struct Sprite {
     pub width: u8,
     pub height: u8,
     pub is_tile: bool,
-    pub with_interrupt: bool,
 }
 
 
@@ -52,12 +51,8 @@ impl Sprite {
         console.blitter_registers.start.write(1);
 
 
-        if self.with_interrupt {
-            unsafe { gt_crust::boot::wait(); }
-            console.blitter_registers.reset_irq();
-        } else {
-            while console.blitter_registers.start.read() == 1 {}
-        }
+        unsafe { gt_crust::boot::wait(); }
+        console.blitter_registers.reset_irq();
     }
 
     // TODO: add function to draw sprite without waiting, for optimization - maybe add private "inline always" version for code-reuse

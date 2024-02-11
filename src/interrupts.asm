@@ -2,7 +2,7 @@
 .global wait, null_interrupt
 
 wait:
-    .byte $CB
+    .byte 0xCB
     RTS
 
 null_interrupt:

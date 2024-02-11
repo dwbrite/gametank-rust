@@ -122,5 +122,5 @@ macro_rules! impl_div_mod {
 
 impl_div_mod!(u8,  __udivqi3, __umodqi3, __udivmodqi4);
 impl_div_mod!(u16, __udivhi3, __umodhi3, __udivmodhi4);
-impl_div_mod!(u32, __udivsi3, __umodsi3, __udivmodsi4);
-impl_div_mod!(u64, __udivdi3, __umoddi3, __udivmoddi4);
+// impl_div_mod!(u32, __udivsi3, __umodsi3, __udivmodsi4);
+// impl_div_mod!(u64, __udivdi3, __umoddi3, __udivmoddi4);

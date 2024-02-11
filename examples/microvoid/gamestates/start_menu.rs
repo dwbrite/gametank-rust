@@ -40,7 +40,8 @@ impl StartMenu {
 
 
     fn draw_start_text(&mut self, ticks: u64, console: &mut Console) {
-        let y_offset = (ticks % (78)) / 26; // 3 states, 26 ticks long each
+        // let y_offset = (ticks % (78)) / 26; // 3 states, 26 ticks long each
+        let y_offset = 0u8;
         self.minifont.draw_string(console, 30, 80 - (y_offset as u8), &string_to_indices!("Press Start, Gamer"));
     }
 
@@ -49,10 +50,20 @@ impl StartMenu {
 
 impl GameState for StartMenu {
     fn update_and_draw(mut self, ticks: u64, console: &mut Console) -> GameStates {
+        console.via.profiler_start(0);
+
         draw_background(console, true);
+
         draw_clouds(&self.position.to_fancy(), console);
+
+        console.via.profiler_start(1);
         self.draw_start_text(ticks, console);
+        console.via.profiler_end(1);
+
+
+        console.via.profiler_start(2);
         self.grass.draw_grass(self.position.to_fancy(), console);
+        console.via.profiler_end(2);
 
         if console.gamepad_1.is_pressed(Buttons::Start) {
             console.rng_seed = ticks;
@@ -64,6 +75,7 @@ impl GameState for StartMenu {
         if self.is_seeded && ticks % 16 == 0 {
             return GameStates::Runup(Runup::init(self, console))
         }
+        console.via.profiler_end(0);
 
         GameStates::StartMenu(self)
     }

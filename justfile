@@ -27,7 +27,7 @@ objdump-example example_name:
 # build example compiling asm first
 build-example example_name:
     just build-asm
-    cargo build --release --example {{example_name}} -Z build-std=core --target mos-unknown-none
+    cargo +mos build --release --example {{example_name}} -Z build-std=core --target mos-unknown-none
     just objcopy-example {{example_name}}
 
 # do you really need a doc comment?

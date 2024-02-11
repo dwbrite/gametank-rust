@@ -2,8 +2,11 @@ MEMORY
 {
     ZP (rw) : ORIGIN = 0x0040, LENGTH = 0x00BF /* zero page up to 0x100, using 0x00 through 0x3F for imaginary reg */
 	RAM (rwx) : ORIGIN = 0x0200, LENGTH = 0x1DFF /* I have no idea how the software stack works. */
+
 	SCR (w) : ORIGIN = 0x2000, LENGTH = 0x0007 /* write only SCR, so the linker doesn't try to LDA $2000 */
-	FLASH (rw) : ORIGIN = 0x8000, LENGTH = 0x7FF9 /* flash before vector table */
+
+	BANKED_FLASH (rw) : ORIGIN = 0x8000, LENGTH = 0x4FFF /* banked flash */
+	FIXED_FLASH (rw) : ORIGIN = 0xD000, LENGTH = 0x2FF9 /* always accessible flash, just before vector table. Are these allowed to overlap? */
     VECTOR_TABLE (rw) : ORIGIN = 0xFFFA, LENGTH = 6
 }
 
@@ -13,25 +16,30 @@ SECTIONS
         KEEP(*(.vector_table));
     } > VECTOR_TABLE
 
-	.text : {
-		*(.text*)
-    } > FLASH = 0xFF
-
     .rodata : {
         *(.rodata*);
-    } > FLASH
+    } > BANKED_FLASH
+
+	.text_fixed : {
+		*(.text.fixed*)
+    } > FIXED_FLASH = 0xFF
+
+	.text : {
+		*(.text*)
+    } > BANKED_FLASH = 0xFF
+
 
     .init : {
         KEEP(*(.init))
-    } > FLASH
+    } > FIXED_FLASH
 
     .data : {
         *(.data*)
-    } > FLASH
+    } > FIXED_FLASH
 
     .bss : {
         *(.bss*)
-    } > RAM
+    } > FIXED_FLASH
 
 
     .noinit (NOLOAD) : {

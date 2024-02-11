@@ -21,7 +21,6 @@ impl Grass {
             width: sprite_data.width,
             height: sprite_data.height,
             is_tile: false,
-            with_interrupt: false,
         };
 
         position.y = 101+64 - sprite.height; // draw right above floor (100)
@@ -95,7 +94,7 @@ impl Grass {
             self.grass_draw_helper(self.array[i], &mut position, console);
         }
         // TODO: decide if this blitter wait is necessary
-        unsafe { wait(); }
+        // unsafe { wait(); }
         console.blitter_registers.reset_irq();
     }
 }

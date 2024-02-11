@@ -52,7 +52,6 @@ impl FontHandle {
 
     pub fn draw_string(&self, console: &mut Console, x: u8, y: u8, string: &[usize]) {
         let mut w = 0;
-        let mut is_first = true;
         for char in string {
             let c = sprite::Sprite {
                 bank: VramBank {
@@ -64,10 +63,10 @@ impl FontHandle {
                 width: self.spritesheet.sprite_data[*char].width,
                 height: self.spritesheet.sprite_data[*char].height,
                 is_tile: false,
-                with_interrupt: false,
             };
             let x_offset = self.spritesheet.sprite_data[*char].x_offset;
             let y_offset = self.spritesheet.sprite_data[*char].y_offset;
+
             let x = w + x + x_offset;
             let y = y + y_offset;
 
@@ -77,10 +76,11 @@ impl FontHandle {
                 w -= 1
             }
 
-            string_draw_helper(c, x, y, is_first, console);
-            is_first = false;
+
+
+            string_draw_helper(c, x, y, console);
         }
-        unsafe { wait() }
+        // unsafe { wait() }
         console.blitter_registers.reset_irq();
     }
 
@@ -98,7 +98,6 @@ impl FontHandle {
         let mut remainder = number;
         let mut digits = [0; 7];
         let mut w = 0;
-        let mut is_first = true;
 
         let mut beyond_front = false;
 
@@ -126,7 +125,6 @@ impl FontHandle {
                 width: self.spritesheet.sprite_data[char].width,
                 height: self.spritesheet.sprite_data[char].height,
                 is_tile: false,
-                with_interrupt: false,
             };
             let x_offset = self.spritesheet.sprite_data[char].x_offset;
             let y_offset = self.spritesheet.sprite_data[char].y_offset;
@@ -144,18 +142,14 @@ impl FontHandle {
 
             w += c.width + x_offset;
 
-            string_draw_helper(c, x, y, is_first, console);
-            is_first = false;
+            string_draw_helper(c, x, y, console);
         }
         unsafe { wait(); }
         console.blitter_registers.reset_irq();
     }
 }
 
-fn string_draw_helper(sprite: sprite::Sprite, x: u8, y: u8, is_first: bool, console: &mut Console) {
-    if !is_first {
-        while console.blitter_registers.start.read() == 1 {}
-    }
+fn string_draw_helper(sprite: sprite::Sprite, x: u8, y: u8, console: &mut Console) {
     console.control_registers.set_dma_enable(true);
 
     console.control_registers.set_colorfill_mode(false);
