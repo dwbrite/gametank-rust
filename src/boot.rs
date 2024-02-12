@@ -1,6 +1,7 @@
 use core::panic::PanicInfo;
 use crate::*;
 use core::ptr;
+use crate::system::via::Via;
 
 pub static mut VBLANK: bool = false;
 
@@ -18,13 +19,14 @@ fn panic(_panic: &PanicInfo<'_>) -> ! {
 #[link_section = ".text.fixed"]
 extern "C" fn __boot() {
     unsafe {
-        __rc0 = 0xFF;
-        __rc1 = 0x1F;
-
         let bank_reg: *mut u8 = 0x2005 as *mut u8;
         ptr::write_volatile(bank_reg, 0);
 
+        __rc0 = 0xFF;
+        __rc1 = 0x1F;
 
+        let mut via: &'static mut Via = Via::new();
+        via.change_rom_bank(254);
 
         // init();
         main();

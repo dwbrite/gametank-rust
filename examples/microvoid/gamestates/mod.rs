@@ -1,7 +1,7 @@
 use crate::gamestates::playing::Playing;
 use crate::gamestates::runup::Runup;
 use crate::gamestates::start_menu::StartMenu;
-use crate::system::console::Console;
+use gt_crust::system::console::Console;
 
 pub mod start_menu;
 mod playing;

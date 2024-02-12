@@ -38,7 +38,7 @@ pub struct MirroredScr {
 
 impl MirroredScr {
     /// 0 = copy 16x16 across whole buffer
-    pub(crate) fn set_dma_gcarry(&mut self, gcarry: bool) {
+    pub fn set_dma_gcarry(&mut self, gcarry: bool) {
         self.mirror.video_reg.update(|val| *val = *val.set_bit(4, gcarry));
         self.scr.video_reg.write(self.mirror.video_reg.read());
     }

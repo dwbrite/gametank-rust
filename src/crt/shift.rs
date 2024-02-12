@@ -24,7 +24,7 @@ macro_rules! impl_shr {
     };
 }
 
-// impl_shl!(u8, __ashlqi3);
+impl_shl!(u8, __ashlqi3);
 impl_shl!(u16, __ashlhi3);
 // impl_shl!(u32, __ashlsi3);
 // impl_shl!(u64, __ashldi3);

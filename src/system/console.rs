@@ -6,6 +6,7 @@ use wyhash;
 use wyhash::wyrng;
 use crate::system::inputs::{GamePadPort, GameshockOne};
 use crate::system::via::Via;
+use crate::boot;
 
 #[derive(Debug, Copy, Clone)]
 pub enum SpriteRamQuadrant {
@@ -26,8 +27,8 @@ pub enum BlitMode {
 
 /// the public friendly APIs?
 pub struct Console {
-    pub(crate) control_registers: MirroredScr,
-    pub(crate) blitter_registers: &'static mut Bcr,
+    pub control_registers: MirroredScr,
+    pub blitter_registers: &'static mut Bcr,
     pub via: &'static mut Via,
     vram: VramDma,
     pub gamepad_1: GameshockOne,
@@ -113,7 +114,7 @@ impl Console {
         }
 
         //
-        unsafe { gt_crust::boot::wait(); }
+        unsafe { boot::wait(); }
         self.blitter_registers.reset_irq();
     }
 
@@ -131,7 +132,7 @@ impl Console {
         self.blitter_registers.height.write(1);
         self.blitter_registers.start.write(1);
 
-        unsafe { gt_crust::boot::wait(); }
+        unsafe { boot::wait(); }
         self.blitter_registers.reset_irq();
     }
 
@@ -140,7 +141,7 @@ impl Console {
         self.control_registers.enable_vblank_nmi(true);
 
         self.blitter_registers.reset_irq(); // set to 0 -- is this necessary?
-        unsafe { gt_crust::boot::wait(); }
+        unsafe { boot::wait(); }
     }
 
     pub fn flip_framebuffer(&mut self) {

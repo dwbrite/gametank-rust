@@ -1,13 +1,13 @@
 use core::ops::Div;
 use fixed::{FixedI16, FixedU16};
-use fixed::types::extra::U8;
-use crate::gamer::GamerStates::{Falling, Jumping, Running, Sliding, Standing};
-use crate::system::{sprite};
-use crate::system::console::{BlitMode, Console, SpriteRamQuadrant};
-use crate::system::inputs::Buttons;
-use crate::system::position::{FancyPosition, SubpixelFancyPosition};
-use crate::system::rectangle::Rectangle;
-use crate::system::sprite::VramBank;
+
+use crate::gamer::GamerStates::{ControlledFalling, Jumping, Running, Sliding, Standing, UncontrolledFalling};
+use gt_crust::system::{sprite};
+use gt_crust::system::console::{BlitMode, Console, SpriteRamQuadrant};
+use gt_crust::system::inputs::Buttons;
+use gt_crust::system::position::{FancyPosition, SubpixelFancyPosition};
+use gt_crust::system::rectangle::Rectangle;
+use gt_crust::system::sprite::VramBank;
 
 // creates a Sprite and SpriteSheet struct in this module, as well as a static SpriteSheet GAMER_SPRITES
 dgtf_macros::include_spritesheet!(GAMER_SPRITES, "examples/microvoid/assets/gamer_con_polvo.bmp", "examples/microvoid/assets/gamer_con_polvo.json");
@@ -16,14 +16,35 @@ pub const FRAME_TIMES: [u8; 12] =   [0,  5,  5,  5,  5,  5,  5,  5,  4,  0,  0, 
 pub const X_OFFSET: [u8; 12] =      [2,  0,  1,  2,  2,  0,  2,  2,  2,  2,  2,  6];
 pub const Y_OFFSET: [u8; 12] =      [0,  0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  2];
 
+pub const FRAME_RUN_DISTANCE: [FixedI16<8>; 12] = [
+    FixedI16::<8>::lit("0"),
+    FixedI16::<8>::lit("6.65"),
+    FixedI16::<8>::lit("6.65"),
+    FixedI16::<8>::lit("6.65"),
+    FixedI16::<8>::lit("6.65"),
+    FixedI16::<8>::lit("6.65"),
+    FixedI16::<8>::lit("6.65"),
+    FixedI16::<8>::lit("6.65"),
+    FixedI16::<8>::lit("5.4"),
+    FixedI16::<8>::lit("00"),
+    FixedI16::<8>::lit("00"),
+    FixedI16::<8>::lit("00"),
+];
 
+pub const BASE_GRAVITY: FixedI16<8> = FixedI16::<8>::lit("0.28");
+pub const INITIAL_JUMP_GRAVITY: FixedI16<8> = FixedI16::<8>::lit("0.07");
+pub const CONTROLLED_FALL_GRAVITY: FixedI16<8> = FixedI16::<8>::lit("0.045");
+pub const MAX_VELOCITY: FixedI16<8> = FixedI16::<8>::lit("2.5");
+pub const ZERO: FixedI16<8> = FixedI16::<8>::lit("0.0");
+pub const JUMP_VELOCITY: FixedI16<8> = FixedI16::<8>::lit("-2.1");
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum GamerStates {
     Standing,
     Running,
     Jumping,
-    Falling,
+    ControlledFalling,
+    UncontrolledFalling,
     Sliding,
 }
 
@@ -33,7 +54,8 @@ impl GamerStates {
             Standing => 0,
             Running => 1,
             Jumping => 9,
-            Falling => 10,
+            ControlledFalling => 10,
+            UncontrolledFalling => 10,
             Sliding => 11
         }
     }
@@ -49,9 +71,10 @@ pub struct Gamer {
     pub state: GamerStates,
     pub subpixel_pos: SubpixelFancyPosition,
     pub holding_jump: bool,
-    pub velocity: FixedI16<U8>,
-    pub acceleration: FixedI16<U8>,
+    pub velocity: FixedI16<8>,
+    pub acceleration: FixedI16<8>,
     pub no_jump: u8, // reused for jump timing
+    pub run_frame_position: FixedI16<8>, // bruh.png
 }
 
 impl Gamer {
@@ -90,16 +113,17 @@ impl Gamer {
             quadrant,
             spritesheet: sprite_sheet,
             frame_counter: 0,
-            animation: Falling.to_animation_idx(),
-            state: Falling,
+            animation: UncontrolledFalling.to_animation_idx(),
+            state: UncontrolledFalling,
             subpixel_pos: SubpixelFancyPosition {
-                x: FixedU16::<U8>::from_num(24+64),
-                y: FixedU16::<U8>::from_num(0+64-10),
+                x: FixedU16::<8>::from_num(24+64),
+                y: FixedU16::<8>::from_num(0+64-10),
             },
             holding_jump: false,
-            velocity: FixedI16::<U8>::from_num(0),
-            acceleration: FixedI16::<U8>::from_num(0),
+            velocity: ZERO,
+            acceleration: ZERO,
             no_jump: 0,
+            run_frame_position: ZERO,
         }
     }
 
@@ -110,49 +134,39 @@ impl Gamer {
     pub fn set_state(&mut self, state: GamerStates) {
         self.state = state;
         self.frame_counter = 0;
+        self.run_frame_position = ZERO;
         self.animation = state.to_animation_idx();
     }
 
     pub fn sim_air_physics(&mut self) {
-        self.acceleration = FixedI16::<U8>::from_num(0.1725*2.5);
-
-        if self.holding_jump {
-            self.acceleration = FixedI16::<U8>::from_num(0.0575*3.0);
-
-
-            // TODO: it feels like this is getting optimized to always be on if you make it past jumping.
-            if self.state == Jumping && self.no_jump < 7 {
-                if self.no_jump < 10 {
-                    self.no_jump += 1;
-                    self.acceleration = FixedI16::<U8>::from_num(0.0325*3.0);
-                }
-            }
-        }
-
         self.velocity += self.acceleration;
 
-        if self.velocity > FixedI16::<U8>::from_num(2.5*2.0) {
-            self.velocity = FixedI16::<U8>::from_num(2.5*2.0);
+        if self.velocity > MAX_VELOCITY {
+            self.velocity = MAX_VELOCITY;
         }
 
         self.subpixel_pos.y = self.subpixel_pos.y.add_signed(self.velocity);
 
         if self.subpixel_pos.to_fancy().y > 100+64 {
-            self.subpixel_pos.y = FixedU16::<U8>::from(64+100);
-            self.velocity = FixedI16::<U8>::from(0);
-            self.acceleration = FixedI16::<U8>::from(0);
+            self.subpixel_pos.y = FixedU16::<8>::from(64+100);
+            self.velocity = ZERO;
+            self.acceleration = ZERO;
             self.set_state(Running);
             self.no_jump = 0; // no_jump frames are CANCELLED
         }
     }
 
-    pub fn update_and_draw(&mut self, velocity_x: FixedI16<U8>, console: &mut Console) {
+    pub fn update_and_draw(&mut self, velocity_x: FixedI16<8>, console: &mut Console) {
+        if self.holding_jump && !console.gamepad_1.is_pressed(Buttons::A) {
+            self.holding_jump = false;
+        }
+
         match self.state {
             Running => {
                 if self.no_jump == 0 && console.gamepad_1.is_pressed(Buttons::A) {
                     self.holding_jump = true;
                     self.set_state(Jumping);
-                    self.velocity = FixedI16::<U8>::from_num(-1.75*1.75);
+                    self.velocity = JUMP_VELOCITY;
                     self.no_jump = 1;
                 }
 
@@ -165,13 +179,33 @@ impl Gamer {
                     self.holding_jump = false;
                 }
 
-                if self.velocity > FixedI16::<U8>::from_num(0) {
-                    self.set_state(Falling);
+                self.acceleration = BASE_GRAVITY;
+                if self.holding_jump && self.no_jump < 10 {
+                    self.acceleration = INITIAL_JUMP_GRAVITY;
                 }
 
                 self.sim_air_physics();
+
+
+                if self.velocity > ZERO {
+                    if self.holding_jump {
+                        self.set_state(ControlledFalling);
+                    } else {
+                        self.set_state(UncontrolledFalling);
+                    }
+                }
             }
-            Falling  => {
+            ControlledFalling  => {
+                self.acceleration = CONTROLLED_FALL_GRAVITY;
+
+                self.sim_air_physics();
+
+                if !self.holding_jump  {
+                    self.set_state(UncontrolledFalling);
+                }
+            }
+            UncontrolledFalling => {
+                self.acceleration = BASE_GRAVITY;
                 self.sim_air_physics();
             }
             _ => { /* not implemented */ }
@@ -209,8 +243,10 @@ impl Gamer {
 
         // TODO: this could _probably_ be improved, right?
 
-        if self.frame_counter > (FixedU16::<U8>::from_num(FRAME_TIMES[self.animation]).div(velocity_x.unsigned_abs())).to_num::<u8>() {
-            self.frame_counter = 0;
+        self.run_frame_position += velocity_x;
+
+        if self.run_frame_position > FRAME_RUN_DISTANCE[self.animation] {
+            self.run_frame_position -= FRAME_RUN_DISTANCE[self.animation].clone();
             match self.animation {
                 1..=7 => self.animation += 1,
                 8 => self.animation = 1,

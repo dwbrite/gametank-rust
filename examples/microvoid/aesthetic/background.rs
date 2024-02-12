@@ -1,14 +1,12 @@
-use crate::system::console::{BlitMode, Console, SpriteRamQuadrant};
-use crate::system::position::FancyPosition;
-use crate::system::sprite::{Sprite, VramBank};
+use gt_crust::system::console::{BlitMode, Console, SpriteRamQuadrant};
+use gt_crust::system::position::FancyPosition;
+use gt_crust::system::sprite::{Sprite, VramBank};
 
 pub fn draw_background(console: &mut Console, redraw_ground: bool) {
-    console.draw_box(0, 0, 127, 100, 0b101_00_000, false);
-    console.draw_box(127, 0, 1, 100, 0b101_00_000, false);
+    console.draw_box(1, 0, 126, 100, 0b101_00_000, false);
 
     if redraw_ground {
-        console.draw_box(0, 100, 127, 28, 0b011_10_110, false);
-        console.draw_box(127, 100, 1, 28, 0b011_10_110, false);
+        console.draw_box(1, 100, 126, 28, 0b011_10_110, false);
     }
 }
 

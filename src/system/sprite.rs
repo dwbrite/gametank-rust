@@ -1,6 +1,8 @@
 use crate::system::console::{BlitMode, Console, SpriteRamQuadrant};
 use crate::system::position::{Dimensions, FancyPosition, ScreenSpacePosition};
 
+use crate::boot;
+
 pub struct VramBank {
     pub bank: u8,
     pub quadrant: SpriteRamQuadrant
@@ -33,8 +35,6 @@ impl SpriteRamQuadrant {
 }
 
 impl Sprite {
-
-    #[inline(always)]
     pub fn send_blit(&self, fb_position: &ScreenSpacePosition, vram_position: &ScreenSpacePosition, dimensions: &Dimensions, console: &mut Console) {
         console.control_registers.set_dma_enable(true);
 
@@ -51,7 +51,7 @@ impl Sprite {
         console.blitter_registers.start.write(1);
 
 
-        unsafe { gt_crust::boot::wait(); }
+        unsafe { boot::wait(); }
         console.blitter_registers.reset_irq();
     }
 

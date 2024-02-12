@@ -1,7 +1,15 @@
-# Use your existing image as the base
-FROM dwbrite/rust-mos:latest
+FROM mrkits/rust-mos:981c2b62d-67f60c2-4fd9a3e6 as rust-mos
 
-ENV PATH="/root/.cargo/bin:${PATH}"
+WORKDIR /
+
+USER root
+RUN mkdir /workspace
+WORKDIR /workspace
+
+ENV PATH=/home/mos/.cargo/bin:/usr/local/bin:${PATH}
+
+RUN rustup default stable
+
 RUN cargo install just
 
 # Update the package list and install packages
@@ -23,7 +31,6 @@ RUN git clone https://github.com/denysdovhan/spaceship-prompt.git "$ZSH_CUSTOM/t
 
 # Configure Zsh to use the Spaceship theme
 RUN sed -i 's/ZSH_THEME="robbyrussell"/ZSH_THEME="spaceship"/' /root/.zshrc
-
 
 # Create the directory for custom completions
 RUN mkdir -p /root/.zsh/completion
@@ -50,7 +57,7 @@ RUN echo '# Source .zlogin if it exists' >> /root/.zshrc \
 # Set the default shell to Zsh
 ENV SHELL=/bin/zsh
 
-# Set the working directory
-WORKDIR /workspace
+ENV PATH=/root/.cargo/bin:${PATH}
+RUN rustup toolchain link mos /usr/local/rust-mos
 
 CMD ["zsh"]

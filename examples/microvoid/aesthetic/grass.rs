@@ -1,7 +1,7 @@
 use gt_crust::boot::wait;
-use crate::system::console::{Console, SpriteRamQuadrant};
-use crate::system::position::{Dimensions, FancyPosition, ScreenSpacePosition};
-use crate::system::sprite::{Sprite, VramBank};
+use gt_crust::system::console::{Console, SpriteRamQuadrant};
+use gt_crust::system::position::{Dimensions, FancyPosition, ScreenSpacePosition};
+use gt_crust::system::sprite::{Sprite, VramBank};
 
 pub struct Grass {
     pub array: [usize; 5], // 32*4 = 128, +1 for overscan
@@ -10,7 +10,7 @@ pub struct Grass {
 impl Grass {
     #[inline(never)]
     fn grass_draw_helper(&self, grass_idx: usize, mut position: &mut FancyPosition, console: &mut Console) {
-        let sprite_data = crate::stuff::ASSORTED_SPRITES.sprite_data[grass_idx + 8];
+        let sprite_data = crate::stuff::ASSORTED_SPRITES.sprite_data[grass_idx + 6];
         let sprite = Sprite {
             bank: VramBank {
                 bank: 0,

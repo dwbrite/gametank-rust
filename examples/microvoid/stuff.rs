@@ -1,4 +1,4 @@
-use crate::system::console::{Console, SpriteRamQuadrant};
+use gt_crust::system::console::{Console, SpriteRamQuadrant};
 dgtf_macros::include_spritesheet!(ASSORTED_SPRITES, "examples/microvoid/assets/other_stuff.bmp", "examples/microvoid/assets/other_stuff.json");
 
 

@@ -1,6 +1,5 @@
 use bit_field::BitField;
 use volatile::Volatile;
-use crate::system::bcr::Bcr;
 
 #[repr(C,packed)]
 pub struct Via {

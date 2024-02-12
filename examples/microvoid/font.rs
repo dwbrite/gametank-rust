@@ -1,7 +1,8 @@
 use gt_crust::boot::wait;
-use crate::system::console::{Console, SpriteRamQuadrant};
-use crate::system::sprite;
-use crate::system::sprite::VramBank;
+use gt_crust::system::console::{Console, SpriteRamQuadrant};
+use gt_crust::system::sprite;
+use gt_crust::system::sprite::VramBank;
+
 
 // creates a Sprite and SpriteSheet struct in this module, as well as a static SpriteSheet MINIFONT_SPRITES
 dgtf_macros::include_spritesheet!(MINIFONT_SPRITES, "examples/microvoid/assets/minifont-p.bmp", "examples/microvoid/assets/minifont-p.json");

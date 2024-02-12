@@ -1,14 +1,15 @@
 use fixed::{FixedI16, FixedU16};
-use fixed::types::extra::U8;
+
 use crate::font::FontHandle;
-use crate::system::console::{Console};
+use gt_crust::system::console::{Console};
 use dgtf_macros::string_to_indices;
 use crate::aesthetic::background::{draw_background, draw_clouds};
 use crate::aesthetic::grass::Grass;
 use crate::gamestates::{GameState, GameStates};
 use crate::gamestates::runup::Runup;
-use crate::system::inputs::Buttons;
-use crate::system::position::{FancyPosition, SubpixelFancyPosition};
+use gt_crust::system::inputs::Buttons;
+use gt_crust::system::position::{FancyPosition, SubpixelFancyPosition};
+use gt_crust::system::console::SpriteRamQuadrant;
 
 pub const STARTING_GRASS: [usize; 5] = [0, 5, 6, 3, 4];
 
@@ -17,24 +18,24 @@ pub struct StartMenu {
     pub position: SubpixelFancyPosition,
     pub grass: Grass,
     is_seeded: bool,
-    pub velocity: FixedI16<U8>,
+    pub velocity: FixedI16<8>,
 }
 
 impl StartMenu {
     pub(crate) fn init(console: &mut Console) -> StartMenu {
-        let minifont = FontHandle::init(console, 0, crate::system::console::SpriteRamQuadrant::One);
+        let minifont = FontHandle::init(console, 0, gt_crust::system::console::SpriteRamQuadrant::One);
 
         Self {
             minifont,
             position: SubpixelFancyPosition {
-                x: FixedU16::<U8>::from_num(0),
-                y: FixedU16::<U8>::from_num(0),
+                x: FixedU16::<8>::from_num(0),
+                y: FixedU16::<8>::from_num(0),
             },
             grass: Grass {
                 array: STARTING_GRASS,
             },
             is_seeded: false,
-            velocity: FixedI16::<U8>::from_num(2),
+            velocity: FixedI16::<8>::from_num(1.3),
         }
     }
 

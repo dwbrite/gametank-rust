@@ -1,6 +1,6 @@
 use fixed::FixedI16;
-use fixed::types::extra::U8;
-use crate::system::console::{Console, SpriteRamQuadrant};
+
+use gt_crust::system::console::{Console, SpriteRamQuadrant};
 use dgtf_macros::string_to_indices;
 use crate::aesthetic::background::{draw_background, draw_clouds};
 use crate::aesthetic::grass::Grass;
@@ -8,10 +8,10 @@ use crate::font::FontHandle;
 use crate::gamestates::{GameState, GameStates};
 use crate::gamestates::playing::Playing;
 use crate::gamestates::start_menu::{StartMenu};
-use crate::system::inputs::Buttons;
+use gt_crust::system::inputs::Buttons;
 
 use crate::gamer::*;
-use crate::system::position::{f16u8_to_u8, FancyPosition, SubpixelFancyPosition};
+use gt_crust::system::position::{f16u8_to_u8, FancyPosition, SubpixelFancyPosition};
 
 pub struct Runup {
     pub minifont: FontHandle, // TODO: maybe abstract the fields/fns common between start_menu and playing
@@ -19,7 +19,7 @@ pub struct Runup {
     pub grass: Grass,
     pub gamer: Gamer,
     pub timer: u16,
-    pub velocity: FixedI16<U8>,
+    pub velocity: FixedI16<8>,
 }
 
 impl Runup {
@@ -50,7 +50,7 @@ impl GameState for Runup {
         if !is_running {
             self.gamer.holding_jump = true;
             // temporarily reduce gravity, for aesthetic reasons
-            self.gamer.velocity -= FixedI16::<U8>::from_num(0.015);
+            self.gamer.velocity -= FixedI16::<8>::from_num(0.015);
         } else if self.timer >= 1 { // wait 3 seconds TODO set this back to 180
             self.minifont.draw_string(console, 64, 72, &string_to_indices!("hold A to jump"));
             if console.gamepad_1.is_pressed(Buttons::A) {
