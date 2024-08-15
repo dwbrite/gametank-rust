@@ -1,5 +1,5 @@
 use fixed::FixedI16;
-// use fixed::traits::LossyInto;
+
 
 use gt_crust::system::console::{BlitMode, Console, SpriteRamQuadrant};
 use gt_crust::system::position::{FancyPosition, SubpixelFancyPosition};
@@ -14,7 +14,7 @@ pub enum BadDudes {
 
 #[enum_delegate::register]
 pub trait BadDude {
-    fn update_and_draw(&mut self, position: FancyPosition, console: &mut Console);
+    fn update_and_draw(&mut self, velocity_x: FixedI16<8>, console: &mut Console);
     fn hitbox(&self) -> Rectangle;
 
     fn is_offscreen_left(&self) -> bool;
@@ -23,7 +23,7 @@ pub trait BadDude {
 pub struct NoDude {}
 
 impl BadDude for NoDude {
-    fn update_and_draw(&mut self, _position: FancyPosition, _console: &mut Console) {
+    fn update_and_draw(&mut self, _velocity_x: FixedI16<8>, _console: &mut Console) {
         // do nothing
     }
 
@@ -40,13 +40,13 @@ impl BadDude for NoDude {
 }
 
 pub struct LineDude {
-    pub position: FancyPosition,
+    pub position: SubpixelFancyPosition,
     pub height: u8, // must be %2
 }
 
 impl BadDude for LineDude {
-    fn update_and_draw(&mut self, position: FancyPosition, console: &mut Console) {
-        use az::Cast;
+    fn update_and_draw(&mut self, velocity_x: FixedI16<8>, console: &mut Console) {
+        self.position.x = self.position.x.sub_signed(velocity_x);
 
         let sprite_data = crate::stuff::ASSORTED_SPRITES.sprite_data[0];
         let mut sprite = Sprite {
@@ -62,9 +62,8 @@ impl BadDude for LineDude {
         };
 
         // draw top first
-        let mut draw_position = self.position;
+        let mut draw_position = self.position.to_fancy();
         draw_position.y -= self.height;
-        draw_position.x -= position.x;
 
         sprite.draw_sprite_with_overscan(draw_position, BlitMode::Normal, console);
 
@@ -83,14 +82,14 @@ impl BadDude for LineDude {
                 sprite.height = working_height;
             }
 
-            draw_position.y = self.position.y - working_height;
+            draw_position.y = self.position.to_fancy().y - working_height;
             sprite.draw_sprite_with_overscan(draw_position, BlitMode::Normal, console);
             working_height -= sprite.height;
         }
     }
 
     fn hitbox(&self) -> Rectangle {
-        let mut xy = self.position;
+        let mut xy = self.position.to_fancy();
         xy.y -= self.height;
 
         Rectangle {
@@ -102,6 +101,6 @@ impl BadDude for LineDude {
     fn is_offscreen_left(&self) -> bool {
         let sprite_data = crate::stuff::ASSORTED_SPRITES.sprite_data[0];
 
-        self.position.x + sprite_data.width <= 64
+        self.position.to_fancy().x + sprite_data.width <= 64
     }
 }

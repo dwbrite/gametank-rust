@@ -14,13 +14,9 @@ mod bad_dudes;
 
 
 use crate::gamestates::{GameState, GameStates};
-// use crate::gamestates::start_menu::StartMenu;
 use crate::stuff::{load_assorted_sprites};
 use gt_crust::system::console::*;
-use gt_crust::system::position::FancyPosition;
-use crate::bad_dudes::LineDude;
 use crate::gamestates::runup::Runup;
-use crate::scene::Scene;
 
 #[no_mangle]
 #[link_section = ".text.fixed"]
@@ -30,17 +26,6 @@ fn main() {
     // load_title_sprite(&mut console);
 
     let mut ticks = 0u64;
-
-    // let scene_2 = Scene {
-    //     dudes: [BadDude::LineDude(LineDude {
-    //         position: FancyPosition {
-    //             x: 192,
-    //             y: 164,
-    //         },
-    //         height: 2, // must be %2
-    //     })],
-    // };
-
 
     // keeping gamestates very light, so we don't overflow the stack
     let mut current_state: GameStates = GameStates::Runup(Runup::init(&mut console));
