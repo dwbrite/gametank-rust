@@ -1,0 +1,119 @@
+{ "frames": [
+   {
+    "filename": "gamer 0.aseprite",
+    "frame": { "x": 0, "y": 0, "w": 10, "h": 10 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 11, "y": 11, "w": 10, "h": 10 },
+    "sourceSize": { "w": 32, "h": 32 },
+    "duration": 80
+   },
+   {
+    "filename": "gamer 1.aseprite",
+    "frame": { "x": 35, "y": 10, "w": 7, "h": 10 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 13, "y": 11, "w": 7, "h": 10 },
+    "sourceSize": { "w": 32, "h": 32 },
+    "duration": 80
+   },
+   {
+    "filename": "gamer 2.aseprite",
+    "frame": { "x": 0, "y": 20, "w": 7, "h": 10 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 13, "y": 11, "w": 7, "h": 10 },
+    "sourceSize": { "w": 32, "h": 32 },
+    "duration": 80
+   },
+   {
+    "filename": "gamer 3.aseprite",
+    "frame": { "x": 19, "y": 10, "w": 8, "h": 10 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 13, "y": 10, "w": 8, "h": 10 },
+    "sourceSize": { "w": 32, "h": 32 },
+    "duration": 80
+   },
+   {
+    "filename": "gamer 4.aseprite",
+    "frame": { "x": 27, "y": 10, "w": 8, "h": 10 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 12, "y": 10, "w": 8, "h": 10 },
+    "sourceSize": { "w": 32, "h": 32 },
+    "duration": 80
+   },
+   {
+    "filename": "gamer 5.aseprite",
+    "frame": { "x": 30, "y": 20, "w": 7, "h": 10 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 13, "y": 11, "w": 7, "h": 10 },
+    "sourceSize": { "w": 32, "h": 32 },
+    "duration": 80
+   },
+   {
+    "filename": "gamer 6.aseprite",
+    "frame": { "x": 10, "y": 0, "w": 10, "h": 10 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 11, "y": 11, "w": 10, "h": 10 },
+    "sourceSize": { "w": 32, "h": 32 },
+    "duration": 80
+   },
+   {
+    "filename": "gamer 7.aseprite",
+    "frame": { "x": 20, "y": 0, "w": 10, "h": 10 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 11, "y": 10, "w": 10, "h": 10 },
+    "sourceSize": { "w": 32, "h": 32 },
+    "duration": 80
+   },
+   {
+    "filename": "gamer 8.aseprite",
+    "frame": { "x": 30, "y": 0, "w": 10, "h": 10 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 11, "y": 10, "w": 10, "h": 10 },
+    "sourceSize": { "w": 32, "h": 32 },
+    "duration": 80
+   },
+   {
+    "filename": "gamer 9.aseprite",
+    "frame": { "x": 10, "y": 10, "w": 9, "h": 11 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 11, "y": 10, "w": 9, "h": 11 },
+    "sourceSize": { "w": 32, "h": 32 },
+    "duration": 1200
+   },
+   {
+    "filename": "gamer 10.aseprite",
+    "frame": { "x": 0, "y": 10, "w": 10, "h": 10 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 11, "y": 11, "w": 10, "h": 10 },
+    "sourceSize": { "w": 32, "h": 32 },
+    "duration": 1200
+   },
+   {
+    "filename": "gamer 11.aseprite",
+    "frame": { "x": 19, "y": 20, "w": 11, "h": 7 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 11, "y": 16, "w": 11, "h": 7 },
+    "sourceSize": { "w": 32, "h": 32 },
+    "duration": 1200
+   }
+ ],
+ "meta": {
+  "app": "http://www.aseprite.org/",
+  "version": "1.3.2-x64",
+  "image": "gamer.bmp",
+  "format": "I8",
+  "size": { "w": 42, "h": 30 },
+  "scale": "1"
+ }
+}

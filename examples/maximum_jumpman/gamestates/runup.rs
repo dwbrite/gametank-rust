@@ -2,15 +2,16 @@ use fixed::{FixedI16, FixedU16};
 
 use gt_crust::system::console::{Console, SpriteRamQuadrant};
 use dgtf_macros::string_to_indices;
-use crate::aesthetic::background::draw_background;
+use crate::aesthetic::background::{draw_background};
 use crate::aesthetic::grass::Grass;
 use crate::font::FontHandle;
 use crate::gamestates::{GameState, GameStates};
 use crate::gamestates::playing::Playing;
+use crate::gamestates::start_menu::{STARTING_GRASS};
 use gt_crust::system::inputs::Buttons;
 
 use crate::gamer::*;
-use gt_crust::system::position::SubpixelFancyPosition;
+use gt_crust::system::position::{SubpixelFancyPosition};
 
 // TODO: preload rng tiles which are possible
 
@@ -51,8 +52,6 @@ impl GameState for Runup {
         draw_background(console, true); // this brings us down to 30fps lol
         // draw_clouds(&self.position.to_fancy(), console);
         self.grass.draw_grass(self.position.to_fancy(), console);
-        self.minifont.draw_string(console, 28, 40, &string_to_indices!("Maximum Jumpman"));
-        self.minifont.draw_string(console, 28, 46, &string_to_indices!("Chronicles"));
         self.gamer.update_and_draw(self.velocity, console);
 
         if !is_running {
@@ -76,6 +75,3 @@ impl GameState for Runup {
         GameStates::Runup(self)
     }
 }
-
-
-pub const STARTING_GRASS: [usize; 5] = [0, 5, 6, 3, 4];

@@ -22,6 +22,7 @@ wyhash = "0.5.0"
 dgtf_macros = { path = "dgtf-macros" }
 enum_delegate = "0.2.0"
 fixed = "2.0.0-alpha.25.1"
+az = "1.2.1" # for fixed cast
 derive_more = "0.99.17"
 
 

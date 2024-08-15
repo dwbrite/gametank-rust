@@ -7,7 +7,7 @@ use quote::quote;
 use serde::{Deserialize, Serialize};
 use syn::{parse_macro_input, LitStr};
 
-use proc_macro2::TokenStream as TokenStream2;
+use proc_macro2::{Ident, Span, TokenStream as TokenStream2};
 
 
 mod bmp;
@@ -116,6 +116,8 @@ fn process_input(input: TokenStream) -> Inputs {
 pub fn include_spritesheet(input: TokenStream) -> TokenStream {
     let inputs = process_input(input);
     let static_name = inputs.static_name;
+    let sprite_ident = Ident::new(&format!("{}_Sprite", static_name), Span::call_site());
+    let spritesheet_ident = Ident::new(&format!("{}_SpriteSheet", static_name), Span::call_site());
 
     let json_file_contents = std::fs::read_to_string(inputs.json_path.clone())
         .expect(&format!("Failed to read JSON file {:?}", inputs.json_path.clone()));
@@ -145,7 +147,7 @@ pub fn include_spritesheet(input: TokenStream) -> TokenStream {
         let y_offset = sprite.y_offset;
 
         quote! {
-            Sprite {
+            #sprite_ident {
                 sheet_x: #sheet_x,
                 sheet_y: #sheet_y,
                 width: #width,
@@ -164,10 +166,11 @@ pub fn include_spritesheet(input: TokenStream) -> TokenStream {
     let palette = spritesheetimage.palette;
     let pixel_array = spritesheetimage.pixel_array;
     let pixel_array_size = pixel_array.len();
+    let palette_size = palette.len();
 
     let output = quote! {
         #[derive(Debug, Copy, Clone)]
-        pub struct Sprite {
+        pub struct #sprite_ident {
             pub sheet_x: u8,
             pub sheet_y: u8,
             pub width: u8,
@@ -177,16 +180,16 @@ pub fn include_spritesheet(input: TokenStream) -> TokenStream {
         }
 
         #[derive(Debug, Copy, Clone)]
-        pub struct SpriteSheet {
+        pub struct #spritesheet_ident {
             pub pixels_per_byte: u8,
-            pub palette: [u8; 16],
+            pub palette: [u8; #palette_size],
             pub width: u8,
             pub height: u8,
-            pub sprite_data: [Sprite; #num_sprites],
+            pub sprite_data: [#sprite_ident; #num_sprites],
             pub pixel_array: [u8; #pixel_array_size],
         }
 
-        pub static #static_name: SpriteSheet = SpriteSheet {
+        pub static #static_name: #spritesheet_ident = #spritesheet_ident {
             pixels_per_byte: #pixels_per_byte,
             width: #width as u8,
             height: #height as u8,

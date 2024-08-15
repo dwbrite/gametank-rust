@@ -204,7 +204,7 @@ pub struct SpriteSheetImage {
     pub(crate) pixels_per_byte: u8,
     pub(crate) width: u8,
     pub(crate) height: u8,
-    pub(crate) palette: [u8; 16],
+    pub(crate) palette: Vec<u8>,
     pub(crate) pixel_array: Vec<u8>,
 }
 
@@ -216,11 +216,6 @@ impl SpriteSheetImage {
         let bmp = tinybmp::Bmp::<Rgb888>::from_slice(file_contents.as_slice()).unwrap();
         let color_map = color_map();
         let color_palette = derive_gametank_colors(bmp.as_raw().color_table().unwrap());
-
-        let mut palette = [0u8; 16];
-        for (i, c) in color_palette.iter().enumerate() {
-            palette[i] = *c;
-        }
 
         let num_colors = color_palette.len();
 
@@ -237,7 +232,7 @@ impl SpriteSheetImage {
         let pixel_indices: Vec<u8> = bmp.pixels()
             .map(|pixel| {
                 let gt_color = color_map.get(&pixel.1).unwrap();
-                let idx = palette.iter().position(|c| c == gt_color).unwrap();
+                let idx = color_palette.iter().position(|c| c == gt_color).unwrap();
                 idx as u8
             }).collect();
 
@@ -253,7 +248,7 @@ impl SpriteSheetImage {
             pixels_per_byte,
             width,
             height,
-            palette,
+            palette: color_palette,
             pixel_array: packed_pixels,
         }
     }

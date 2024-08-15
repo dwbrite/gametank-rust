@@ -25,7 +25,7 @@ extern "C" fn __boot() {
         __rc0 = 0xFF;
         __rc1 = 0x1F;
 
-        let mut via: &'static mut Via = Via::new();
+        let via: &'static mut Via = Via::new();
         via.change_rom_bank(254);
 
         // init();

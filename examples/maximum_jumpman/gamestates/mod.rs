@@ -3,6 +3,7 @@ use crate::gamestates::runup::Runup;
 // use crate::gamestates::start_menu::StartMenu;
 use gt_crust::system::console::Console;
 
+pub mod start_menu;
 mod playing;
 pub mod runup;
 

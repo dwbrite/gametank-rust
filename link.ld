@@ -5,8 +5,9 @@ MEMORY
 
 	SCR (w) : ORIGIN = 0x2000, LENGTH = 0x0007 /* write only SCR, so the linker doesn't try to LDA $2000 */
 
-	BANKED_FLASH (rw) : ORIGIN = 0x8000, LENGTH = 0x3FFF /* banked flash */
-	FIXED_FLASH (rw) : ORIGIN = 0xC000, LENGTH = 0x3FF9 /* always accessible flash, just before vector table. Are these allowed to overlap? */
+    /* TODO: FIXED_FLASH is only necessary for the bank switching on 2MB cartridges -- shrink it to the size of that function. */
+	BANKED_FLASH (rw) : ORIGIN = 0x8000, LENGTH = 0x4939 /* banked flash */
+	FIXED_FLASH (rw) : ORIGIN = 0xC2A1, LENGTH = 0x2D5F /* always accessible flash, just before vector table. */
     VECTOR_TABLE (rw) : ORIGIN = 0xFFFA, LENGTH = 6
 }
 
