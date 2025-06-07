@@ -3,9 +3,9 @@ use volatile::Volatile;
 
 #[repr(C,packed)]
 pub struct Via {
-    pub iorb: Volatile<u8>, // output register b
-    pub iora: Volatile<u8>, // output register a
-    pub ddrb: Volatile<u8>, //
+    pub iorb: Volatile<u8>, // input/output register b
+    pub iora: Volatile<u8>, // input/output register a
+    pub ddrb: Volatile<u8>, // 
     pub ddra: Volatile<u8>,
     pub t1cl: Volatile<u8>,
     pub t1ch: Volatile<u8>,
@@ -42,7 +42,7 @@ impl Via {
         self.iora.write(*self.iora.read().set_bit(0, true));
         self.iora.write((banknum.get_bit(2) as u8) << 1);
         self.iora.write(*self.iora.read().set_bit(0, true));
-        self.iora.write((banknum.get_bit(1) as u8) << 1); // we don't _need_ to do this technically, a mask would suffice
+        self.iora.write((banknum.get_bit(1) as u8) << 1); // this line could be simplified to a mask, but we don't for consistency
         self.iora.write(*self.iora.read().set_bit(0, true));
         self.iora.write((banknum.get_bit(0) as u8) << 1);
         self.iora.write(*self.iora.read().set_bit(0, true));

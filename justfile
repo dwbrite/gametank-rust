@@ -1,6 +1,6 @@
 ensure-container-running:
     podman ps --filter "name=gametank" --filter "status=running" --format "{{{{.Names}}}}" | grep -q gametank || \
-    podman run -d --name gametank -v $(pwd):/workspace:z dwbrite/rust-mos:gametank-edition sleep infinity
+    podman run -d --name gametank -v $(pwd):/workspace:z --replace dwbrite/rust-mos:gametank-edition sleep infinity
 
 # Compile all .asm files into .o files
 assemble-asm-files: ensure-container-running

@@ -4,15 +4,26 @@ use core::ptr;
 use crate::system::via::Via;
 
 pub static mut VBLANK: bool = false;
+#[panic_handler]
+fn panic(_panic: &PanicInfo<'_>) -> ! {
+    loop {}
+}
 
 extern "C" {
     pub fn null_interrupt();
     pub fn wait();
+    pub fn __do_init_stack();
+    
+    pub static mut __rc50: u8;
+    pub static mut __rc51: u8;
+    
+    pub static __heap_end: usize;
 }
 
-#[panic_handler]
-fn panic(_panic: &PanicInfo<'_>) -> ! {
-    loop {}
+#[no_mangle]
+#[link_section = ".text.fixed"]
+extern "C" fn __init_ram() {
+
 }
 
 #[no_mangle]
@@ -21,14 +32,22 @@ extern "C" fn __boot() {
     unsafe {
         let bank_reg: *mut u8 = 0x2005 as *mut u8;
         ptr::write_volatile(bank_reg, 0);
+        
+        // set initial stack pointer
+        __do_init_stack();
+        
+        let heap_end_addr = ptr::addr_of!(__heap_end) as usize;
 
-        __rc0 = 0xFF;
-        __rc1 = 0x1F;
+        let ox50 = 0x50 as *mut u8;
+        let ox51 = 0x51 as *mut u8;
+        
+        *ox50 = (heap_end_addr & 0xFF) as u8;    // Low byte
+        *ox51 = ((heap_end_addr >> 8) & 0xFF) as u8; // High byte
+        
 
         let via: &'static mut Via = Via::new();
         via.change_rom_bank(254);
 
-        // init();
         main();
     }
     core::panic!("Came out of main");
@@ -44,34 +63,6 @@ extern "C" fn __memset(ptr: *mut u8, value: u8, num: usize) {
         }
     }
 }
-
-extern "C" {
-    static mut __rc0: u8;
-    static mut __rc1: u8;
-}
-
-#[cfg(not(feature = "manual_init"))]
-#[no_mangle]
-#[link_section = ".text.fixed"]
-fn init() { // this is __do_init_stack
-    unsafe {
-        let bank_reg: *mut u8 = 0x2005 as *mut u8;
-        ptr::write_volatile(bank_reg, 0);
-
-        __rc0 = 0xFF;
-        __rc1 = 0x1F;
-    }
-}
-
-#[no_mangle]
-#[link_section = ".text.fixed"]
-fn __do_init_stack() {
-    unsafe {
-        __rc0 = 0xFF;
-        __rc1 = 0x1F;
-    }
-}
-
 
 #[no_mangle]
 extern "C" fn vblank_nmi() {
