@@ -1,7 +1,7 @@
 MEMORY
 {
     ZP (rw) : ORIGIN = 0x0040, LENGTH = 0x00BF /* zero page up to 0x100, using 0x00 through 0x3F for imaginary reg */
-	RAM (rwx) : ORIGIN = 0x0200, LENGTH = 0x1DFF /* I have no idea how the software stack works. */
+	RAM (rwx) : ORIGIN = 0x0100, LENGTH = 0x1EFF
 
 	SCR (w) : ORIGIN = 0x2000, LENGTH = 0x0007 /* write only SCR, so the linker doesn't try to LDA $2000 */
 
@@ -29,7 +29,6 @@ SECTIONS
 		*(.text*)
     } > BANKED_FLASH = 0xFF
 
-
     .init : {
         KEEP(*(.init))
     } > FIXED_FLASH
@@ -38,17 +37,19 @@ SECTIONS
         *(.data*)
     } > FIXED_FLASH
 
-    .bss : {
-        *(.bss*)
-    } > FIXED_FLASH
-
-
+    /* assign noinit section */
     .noinit (NOLOAD) : {
-        *(.noinit*)
-        _stack_end = .;
+        . = ORIGIN(RAM) + LENGTH(RAM) - SIZEOF(.bss);
+        PROVIDE(__heap_end = .);
     } > RAM
 
-    _stack_top = 0x1FFF;
+    /* place bss at the end of RAM */
+    .bss (NOLOAD) : {
+        *(.bss)
+    } > RAM
+
+    __stack = 0x07FF; /* 2KiB stack, minus zp */
+    __heap_start = __stack + 1;
 
     .zp : {
         *(.zp*)
