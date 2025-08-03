@@ -6,8 +6,8 @@ MEMORY
 	SCR (w) : ORIGIN = 0x2000, LENGTH = 0x0007 /* write only SCR, so the linker doesn't try to LDA $2000 */
 
     /* TODO: FIXED_FLASH is only necessary for the bank switching on 2MB cartridges -- shrink it to the size of that function. */
-	BANKED_FLASH (rw) : ORIGIN = 0x8000, LENGTH = 0x4939 /* banked flash */
-	FIXED_FLASH (rw) : ORIGIN = 0xC2A1, LENGTH = 0x2D5F /* always accessible flash, just before vector table. */
+	BANKED_FLASH (rw) : ORIGIN = 0x8000, LENGTH = 0x4000 /* banked flash */
+	FIXED_FLASH (rw) : ORIGIN = 0xC000, LENGTH = 0x2FFF /* always accessible flash, just before vector table. */
     VECTOR_TABLE (rw) : ORIGIN = 0xFFFA, LENGTH = 6
 }
 
@@ -39,17 +39,11 @@ SECTIONS
 
     /* assign noinit section */
     .noinit (NOLOAD) : {
-        . = ORIGIN(RAM) + LENGTH(RAM) - SIZEOF(.bss);
-        PROVIDE(__heap_end = .);
+        *(.noinit*)
+        _stack_end = .;
     } > RAM
 
-    /* place bss at the end of RAM */
-    .bss (NOLOAD) : {
-        *(.bss)
-    } > RAM
-
-    __stack = 0x07FF; /* 2KiB stack, minus zp */
-    __heap_start = __stack + 1;
+    _stack_top = 0x1FFF;
 
     .zp : {
         *(.zp*)

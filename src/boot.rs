@@ -12,19 +12,19 @@ fn panic(_panic: &PanicInfo<'_>) -> ! {
 extern "C" {
     pub fn null_interrupt();
     pub fn wait();
-    pub fn __do_init_stack();
-    
-    pub static mut __rc50: u8;
-    pub static mut __rc51: u8;
-    
-    pub static __heap_end: usize;
+    // pub fn __do_init_stack();
+    //
+    // pub static mut __rc50: u8;
+    // pub static mut __rc51: u8;
+    //
+    // pub static __heap_end: usize;
 }
-
-#[no_mangle]
-#[link_section = ".text.fixed"]
-extern "C" fn __init_ram() {
-
-}
+//
+// #[no_mangle]
+// #[link_section = ".text.fixed"]
+// extern "C" fn __init_ram() {
+//
+// }
 
 #[no_mangle]
 #[link_section = ".text.fixed"]
@@ -34,15 +34,15 @@ extern "C" fn __boot() {
         ptr::write_volatile(bank_reg, 0);
         
         // set initial stack pointer
-        __do_init_stack();
-        
-        let heap_end_addr = ptr::addr_of!(__heap_end) as usize;
-
-        let ox50 = 0x50 as *mut u8;
-        let ox51 = 0x51 as *mut u8;
-        
-        *ox50 = (heap_end_addr & 0xFF) as u8;    // Low byte
-        *ox51 = ((heap_end_addr >> 8) & 0xFF) as u8; // High byte
+        // __do_init_stack();
+        //
+        // let heap_end_addr = ptr::addr_of!(__heap_end) as usize;
+        //
+        // let ox50 = 0x50 as *mut u8;
+        // let ox51 = 0x51 as *mut u8;
+        //
+        // *ox50 = (heap_end_addr & 0xFF) as u8;    // Low byte
+        // *ox51 = ((heap_end_addr >> 8) & 0xFF) as u8; // High byte
         
 
         let via: &'static mut Via = Via::new();
